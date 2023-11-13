@@ -1,0 +1,31 @@
+# def send_email(From, To, Cc, Bcc, subject, content):
+#     with socket.create_connection(("127.0.0.1", 2225)) as server_socket:
+#         response = server_socket.recv(HEADER).decode()
+#         if not response.startswith('220'):
+#             raise Exception(f"Error connecting To server: {response}")
+        
+#         server_socket.send("EHLO [127.0.0.1]\r\n".encode())
+#         response = server_socket.recv(HEADER).decode()
+#         if not response.startswith('250'):
+#             raise Exception(f"Error sending EHLO: {response}")
+        
+#         server_socket.send(f"MAIL FROM:<{From}>\r\n".encode())
+#         response = server_socket.recv(HEADER).decode()
+#         if not response.startswith('250'):
+#             raise Exception(f"Error sending mail address: {response}")
+        
+#         server_socket.send(f"RCPT TO:<{To}>\r\n".encode())
+#         response = server_socket.recv(HEADER).decode()
+#         if not response.startswith('250'):
+#             raise Exception(f"Error sending mail address: {response}")
+        
+#         server_socket.send("DATA\r\n".encode())
+#         response = server_socket.recv(HEADER).decode()
+#         if not response.startswith('354'):
+#             raise Exception(f"Error sending data: {response}")
+        
+#         email_data = f"To: {To}\r\nFrom: {From}\r\nCC: {Cc}\r\nBCC: {Bcc}\r\nSubject: {subject}\r\n\r\n{content}\r\n"
+#         server_socket.sendall(f"{email_data}\r\n.\r\n".encode())
+#         response = server_socket.recv(HEADER).decode()
+#         if not response.startswith('250'):
+#             raise Exception(f"Error sending email: {response}")
