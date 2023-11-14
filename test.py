@@ -58,101 +58,107 @@ import base64
 # if content is not None:
 #     print(f"File content: {content}")
 
-def get_Attached_File():
-    attach_files_path = []
-    files_input = input("Attach files: ").split(',')
-    attach_files_path.extend([file_path.strip() for file_path in files_input])
-    new_path = get_Valid_File(attach_files_path)
+# def get_Attached_File():
+#     attach_files_path = []
+#     files_input = input("Attach files: ").split(',')
+#     attach_files_path.extend([file_path.strip() for file_path in files_input])
+#     new_path = get_Valid_File(attach_files_path)
 
-    return new_path
+#     return new_path
 
-def get_Valid_File(attach_files):  
-    count = 0    
-    new_attach_files = []
+# def get_Valid_File(attach_files):  
+#     count = 0    
+#     new_attach_files = []
 
-    for file_path in attach_files:
-        file_path = file_path.strip()
+#     for file_path in attach_files:
+#         file_path = file_path.strip()
 
-        if os.path.exists(file_path):
-            file_size = os.path.getsize(file_path) / (1024**2)
-            if file_size <= 3:
-                new_attach_files.append(file_path)
-            else:
-                print(f"The size of the attached file {file_path} is too large")
-                print("Do you want to remove or choose another file? (0: remove, 1: choose): ", end="")
+#         if os.path.exists(file_path):
+#             file_size = os.path.getsize(file_path) / (1024**2)
+#             if file_size <= 3:
+#                 new_attach_files.append(file_path)
+#             else:
+#                 print(f"The size of the attached file {file_path} is too large")
+#                 print("Do you want to remove or choose another file? (0: remove, 1: choose): ", end="")
 
-                while True:
-                    choice = int(input())
+#                 while True:
+#                     choice = int(input())
 
-                    if choice == 0:
-                        remove_file = attach_files[count]
-                        attach_files = [file for file in attach_files if file is not remove_file]
-                        break
-                    elif choice == 1:
-                        while True:
-                            add_file = input("File you want to attach: ")
-                            if os.path.exists(add_file):
-                                file_size = os.path.getsize(add_file) / (1024**2)
-                                if file_size <= 3:
-                                    new_attach_files.append(add_file)
-                                    break
-                                else:
-                                    print(f"The size of the attached file {file_path} is too large")
-                            else:
-                                print(f"{add_file} does not exist.")
-                    else:
-                        print("Invalid choice!!! Try again")
-        else:
-            print(f"{file_path} does not exist.")
-            print(f"Do you want to change the file {file_path}? (0: no, 1: yes): ", end="")
+#                     if choice == 0:
+#                         remove_file = attach_files[count]
+#                         attach_files = [file for file in attach_files if file is not remove_file]
+#                         break
+#                     elif choice == 1:
+#                         while True:
+#                             add_file = input("File you want to attach: ")
+#                             if os.path.exists(add_file):
+#                                 file_size = os.path.getsize(add_file) / (1024**2)
+#                                 if file_size <= 3:
+#                                     new_attach_files.append(add_file)
+#                                     break
+#                                 else:
+#                                     print(f"The size of the attached file {file_path} is too large")
+#                             else:
+#                                 print(f"{add_file} does not exist.")
+#                     else:
+#                         print("Invalid choice!!! Try again")
+#         else:
+#             print(f"{file_path} does not exist.")
+#             print(f"Do you want to change the file {file_path}? (0: no, 1: yes): ", end="")
 
-            while True:
-                choice_change = int(input())
-                if choice_change == 0:
-                    break
-                elif choice_change == 1:
-                    while True:
-                        add_file = input("File you want to attach: ")
-                        if os.path.exists(add_file):
-                            file_size = os.path.getsize(add_file) / (1024**2)
-                            if file_size <= 3:
-                                new_attach_files.append(add_file)
-                                break
-                            else:
-                                print(f"The size of the attached file {file_path} is too large")
-                        else:
-                            print(f"{add_file} does not exist.")
-                    break
+#             while True:
+#                 choice_change = int(input())
+#                 if choice_change == 0:
+#                     break
+#                 elif choice_change == 1:
+#                     while True:
+#                         add_file = input("File you want to attach: ")
+#                         if os.path.exists(add_file):
+#                             file_size = os.path.getsize(add_file) / (1024**2)
+#                             if file_size <= 3:
+#                                 new_attach_files.append(add_file)
+#                                 break
+#                             else:
+#                                 print(f"The size of the attached file {file_path} is too large")
+#                         else:
+#                             print(f"{add_file} does not exist.")
+#                     break
             
 
-        count += 1
+#         count += 1
 
-    return new_attach_files
+#     return new_attach_files
 
-def attach_file_in_email(file_path):
-    if os.path.exists(file_path):
-        with open(file_path, 'rb') as at:
-            file_content = at.read()
+# def attach_file_in_email(file_path):
+#     if os.path.exists(file_path):
+#         with open(file_path, 'rb') as at:
+#             file_content = at.read()
 
-            file_content_encode = base64.b64encode(file_content).decode()
+#             file_content_encode = base64.b64encode(file_content).decode()
 
-            attachment_header = "\r\nContent-Type: application/octet-stream" \
-                               f"\r\nContent-Disposition: attachment; filename=\"{os.path.basename(file_path)}\"" \
-                               "\r\nContent-Transfer-Encoding: base64\r\n\r\n"
-            return attachment_header + file_content_encode + "\r\n"
-    else:
-        print("The file does not exist")
-        return ""
+#             attachment_header = "\r\nContent-Type: application/octet-stream" \
+#                                f"\r\nContent-Disposition: attachment; filename=\"{os.path.basename(file_path)}\"" \
+#                                "\r\nContent-Transfer-Encoding: base64\r\n\r\n"
+#             return attachment_header + file_content_encode + "\r\n"
+#     else:
+#         print("The file does not exist")
+#         return ""
 
-def run_send_mail_program():
-    attach_files_path = get_Attached_File()
+# def run_send_mail_program():
+#     attach_files_path = get_Attached_File()
 
-    for path in attach_files_path:
-        hello = attach_file_in_email(path)
-        print(hello)
+#     for path in attach_files_path:
+#         hello = attach_file_in_email(path)
+#         print(hello)
 
     
 
 
-run_send_mail_program()
+# run_send_mail_program()
 
+from datetime import datetime
+
+current_time = datetime.now()
+formatted_time = current_time.strftime("Date: %a, %d %b %Y %H:%M:%S")
+
+print(formatted_time)
