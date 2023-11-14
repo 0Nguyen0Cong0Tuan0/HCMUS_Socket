@@ -5,7 +5,7 @@ from datetime import datetime
 
 HEADER = 1024
 FORMAT = "utf-8"
-BOUNDARY = "--------------5sWLTDpPOowcnjH7yr7J87Aq"
+BOUNDARY = "------------5sWLTDpPOowcnjH7yr7J87Aq"
 MIME_VERSION = "1.0"
 USER_AGENT = "Mozilla Thunderbird"
 CONTENT_LANGUAGE = "en-US"
@@ -15,7 +15,8 @@ CONTENT_TRANSFER_ENCODING = "7bit"
 NOTICE = "This is a multi-part message in MIME format."
 
 def get_Email_To(mails_address_to):
-    To = input("To: ")
+    #To = input("To: ")
+    To = "nguyencongtuan0810@gmail.com"
     mails_address_to.append(To)
 
 def get_Email_Cc(mails_address_cc):
@@ -38,7 +39,6 @@ def get_Attached_File():
         attach_files_path.extend([file_path.strip() for file_path in files_input])
         new_path = get_Valid_File(attach_files_path)
         return new_path
-
 
 def get_Valid_File(attach_files):  
     count = 0    
@@ -118,9 +118,13 @@ def attach_file_in_email(file_path):
         print("The file does not exist")
         return ""
 
+def send_normal_mail(server_socket, email_data, content):
+    email_data += f"Content-Type: {CONTENT_TYPE}\r\nContent-Transfer-Encoding: {CONTENT_TRANSFER_ENCODING}\r\n\r\n{content}\r\n\r\n"
+    server_socket.sendall(f"{email_data}.\r\n".encode())
+
 def send_email_to(From, To, subject, content, attach_files):
     check_attach_file = False
-    if attach_files != ['']:
+    if attach_files != []:
         check_attach_file = True
 
     with socket.create_connection(("127.0.0.1", 2225)) as server_socket:
@@ -158,19 +162,22 @@ def send_email_to(From, To, subject, content, attach_files):
         server_socket.send(f"MIME-Version: {MIME_VERSION}\r\n".encode())
         server_socket.send(f"User-Agent: {USER_AGENT}\r\n".encode())
         server_socket.send(f"Content-Language: {CONTENT_LANGUAGE}\r\n".encode())
-        email_data = f"To: {To}\r\nFrom: {From}\r\nSubject: {subject}\r\n\r\n"
+        email_data = f"To: {To}\r\nFrom: {From}\r\nSubject: {subject}\r\n"
 
         if check_attach_file:
-            email_data += f"{NOTICE}\r\n{BOUNDARY}\r\nContent-Type: {CONTENT_TYPE}\r\nContent-Transfer-Encoding: {CONTENT_TRANSFER_ENCODING}\r\n\r\n{content}\r\n\r\n"
+            email_data += f"\r\n{NOTICE}\r\n--{BOUNDARY}\r\nContent-Type: {CONTENT_TYPE}\r\nContent-Transfer-Encoding: {CONTENT_TRANSFER_ENCODING}\r\n\r\n{content}\r\n\r\n"
+            server_socket.sendall(f"{email_data}".encode())
+            server_socket.send(f"--{BOUNDARY}".encode())
+
+            for file_path in attach_files:  
+                server_socket.send(f"{attach_file_in_email(file_path)}--{BOUNDARY}--\r\n.\r\n".encode())        
         else:
-            email_data = f"To: {To}\r\nFrom: {From}\r\nSubject: {subject}\r\n\r\nContent-Type: {CONTENT_TYPE}\r\nContent-Transfer-Encoding: {CONTENT_TRANSFER_ENCODING}\r\n\r\n{content}\r\n.\r\n"
+            send_normal_mail(server_socket, email_data, content)
+            return
+        
 
-        if check_attach_file:
-            for file_path in attach_files:
-                email_data += f"{BOUNDARY}" + attach_file_in_email(file_path)
-        email_data += f"{BOUNDARY}--\r\n"
+        #server_socket.sendall(f"{email_file_txt}.\r\n".encode())
 
-        server_socket.sendall(f"{email_data}.\r\n".encode())
         response = server_socket.recv(HEADER).decode()
         if not response.startswith('250'):
             raise Exception(f"Error sending email: {response}")
@@ -255,8 +262,8 @@ def run_send_mail_program():
     mails_address_cc = []
     mails_address_bcc = []
     
-    From = input("From: ")
-
+    #From = input("From: ")
+    From = "nctuan22@clc.fitus.edu.vn"
     get_Email_To(mails_address_to)
     get_Email_Cc(mails_address_cc)
     mails_string_cc = ','.join(mails_address_cc)

@@ -1,2 +1,2 @@
-for path in attach_files_path:
-        print(path)
+
+            email_data += f"{NOTICE}\r\n

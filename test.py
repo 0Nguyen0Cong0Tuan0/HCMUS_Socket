@@ -155,10 +155,78 @@ import base64
 
 
 # run_send_mail_program()
-
+import socket
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 from datetime import datetime
+
+HEADER = 1024
+FORMAT = "utf-8"
+BOUNDARY = "--------------5sWLTDpPOowcnjH7yr7J87Aq"
+MIME_VERSION = "1.0"
+USER_AGENT = "Mozilla Thunderbird"
+CONTENT_LANGUAGE = "en-US"
+CONTENT_TYPE = "text/plain; charset=UTF-8; format=flowed"
+CONTENT_TRANSFER_ENCODING = "7bit"
+NOTICE = "This is a multi-part message in MIME format."
 
 current_time = datetime.now()
 formatted_time = current_time.strftime("Date: %a, %d %b %Y %H:%M:%S")
 
 print(formatted_time)
+
+def send_email_to(From, To, subject, content, attach_files):
+    msg = MIMEMultipart()
+    msg["From"] = From
+    msg["To"] = To
+    msg["Subject"] = subject
+    msg["MIME-Version"] = MIME_VERSION
+    msg["User-Agent"] = USER_AGENT
+    msg["Content-Language"] = CONTENT_LANGUAGE
+
+    if attach_files:
+        msg.attach(MIMEText(content, "plain", "UTF-8"))
+
+        for file_path in attach_files:
+            attachment = MIMEBase("application", "octet-stream")
+            attachment.set_payload(open(file_path, "rb").read())
+            encoders.encode_base64(attachment)
+            attachment.add_header("Content-Disposition", f"attachment; filename={file_path}")
+            msg.attach(attachment)
+    else:
+        msg.attach(MIMEText(content, "plain", "UTF-8"))
+
+    email_data = msg.as_string()
+
+    with socket.create_connection(("127.0.0.1", 2225)) as server_socket:
+        response = server_socket.recv(HEADER).decode()
+        if not response.startswith('220'):
+            raise Exception(f"Error connecting to server: {response}")
+
+        server_socket.send("EHLO [127.0.0.1]\r\n".encode())
+        response = server_socket.recv(HEADER).decode()
+        if not response.startswith('250'):
+            raise Exception(f"Error sending EHLO: {response}")
+
+        server_socket.send(f"MAIL FROM:<{From}>\r\n".encode())
+        response = server_socket.recv(HEADER).decode()
+        if not response.startswith('250'):
+            raise Exception(f"Error sending mail address: {response}")
+
+        server_socket.send(f"RCPT TO:<{To}>\r\n".encode())
+        response = server_socket.recv(HEADER).decode()
+        if not response.startswith('250'):
+            raise Exception(f"Error sending mail address: {response}")
+
+        server_socket.send("DATA\r\n".encode())
+        response = server_socket.recv(HEADER).decode()
+        if not response.startswith('354'):
+            raise Exception(f"Error sending data: {response}")
+
+        server_socket.sendall(f"{email_data}\r\n.\r\n".encode())
+
+        response = server_socket.recv(HEADER).decode()
+        if not response.startswith('250'):
+            raise Exception(f"Error sending email: {response}")
