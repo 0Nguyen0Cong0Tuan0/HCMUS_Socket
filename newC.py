@@ -1,28 +1,116 @@
 import socket
+import os
+import base64
 
 HEADER = 1024
+FORMAT = "utf-8"
 
-def getEmailTo(mails_address_to):
+def get_Email_To(mails_address_to):
     To = input("To: ")
     mails_address_to.append(To)
 
-def getEmailCc(mails_address_cc):
-    Cc = input("CC: ")
-    Cc = Cc.split(',')
+def get_Email_Cc(mails_address_cc):
+    Cc = input("CC: ").split(',')
     Cc = [email.strip() for email in Cc]
     mails_address_cc.extend(Cc)
     
-def getEmailBcc(mails_address_bcc):
+def get_Email_Bcc(mails_address_bcc):
     Bcc = input("BCC: ")
     Bcc = Bcc.split(',')
     Bcc = [email.strip() for email in Bcc]
     mails_address_bcc.extend(Bcc)
 
-def send_email_to(From, To, subject, content):
+def get_Attached_File():
+    attach_files_path = []
+    files_input = input("Attach files: ").split(',')
+    attach_files_path.extend([file_path.strip() for file_path in files_input])
+    new_path = get_Valid_File(attach_files_path)
+
+    return new_path
+
+def get_Valid_File(attach_files):  
+    count = 0    
+    new_attach_files = []
+
+    for file_path in attach_files:
+        file_path = file_path.strip()
+
+        if os.path.exists(file_path):
+            file_size = os.path.getsize(file_path) / (1024**2)
+            if file_size <= 3:
+                new_attach_files.append(file_path)
+            else:
+                print(f"The size of the attached file {file_path} is too large")
+                print("Do you want to remove or choose another file? (0: remove, 1: choose): ", end="")
+
+                while True:
+                    choice = int(input())
+
+                    if choice == 0:
+                        remove_file = attach_files[count]
+                        attach_files = [file for file in attach_files if file is not remove_file]
+                        break
+                    elif choice == 1:
+                        while True:
+                            add_file = input("File you want to attach: ")
+                            if os.path.exists(add_file):
+                                file_size = os.path.getsize(add_file) / (1024**2)
+                                if file_size <= 3:
+                                    new_attach_files.append(add_file)
+                                    break
+                                else:
+                                    print(f"The size of the attached file {file_path} is too large")
+                            else:
+                                print(f"{add_file} does not exist.")
+                    else:
+                        print("Invalid choice!!! Try again")
+        else:
+            print(f"{file_path} does not exist.")
+            print(f"Do you want to change the file {file_path}? (0: no, 1: yes): ", end="")
+
+            while True:
+                choice_change = int(input())
+                if choice_change == 0:
+                    break
+                elif choice_change == 1:
+                    while True:
+                        add_file = input("File you want to attach: ")
+                        if os.path.exists(add_file):
+                            file_size = os.path.getsize(add_file) / (1024**2)
+                            if file_size <= 3:
+                                new_attach_files.append(add_file)
+                                break
+                            else:
+                                print(f"The size of the attached file {file_path} is too large")
+                        else:
+                            print(f"{add_file} does not exist.")
+                    break
+            
+
+        count += 1
+
+    return new_attach_files
+
+def attach_file_in_email(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as at:
+            file_content = at.read()
+
+            file_content_encode = base64.b64encode(file_content).decode(FORMAT)
+
+            attachment_header = "\r\nContent-Type: application/octet-stream" \
+                               f"\r\nContent-Disposition: attachment; filename=\"{os.path.basename(file_path)}\"" \
+                               "\r\nContent-Transfer-Encoding: base64\r\n\r\n"
+            return attachment_header + file_content_encode + "\r\n"
+    else:
+        print("The file does not exist")
+        return ""
+
+def send_email_to(From, To, subject, content, attach_files):
     with socket.create_connection(("127.0.0.1", 2225)) as server_socket:
         response = server_socket.recv(HEADER).decode()
         if not response.startswith('220'):
-            raise Exception(f"Error connecting To server: {response}")
+            raise Exception(f"Error connecting to server: {response}")
         
         server_socket.send("EHLO [127.0.0.1]\r\n".encode())
         response = server_socket.recv(HEADER).decode()
@@ -45,7 +133,12 @@ def send_email_to(From, To, subject, content):
             raise Exception(f"Error sending data: {response}")
         
         email_data = f"To: {To}\r\nFrom: {From}\r\nSubject: {subject}\r\n\r\n{content}\r\n"
-        server_socket.sendall(f"{email_data}\r\n.\r\n".encode())
+
+        if attach_files:
+            for file_path in attach_files:
+                email_data += attach_file_in_email(file_path)
+
+        server_socket.sendall(f"{email_data}.\r\n".encode())
         response = server_socket.recv(HEADER).decode()
         if not response.startswith('250'):
             raise Exception(f"Error sending email: {response}")
@@ -114,29 +207,43 @@ def send_email_bcc(From, Bcc, subject, content):
         if not response.startswith('250'):
             raise Exception(f"Error sending email: {response}")
 
+def send_email(mails_address_to, mails_address_cc, mails_string_cc, mails_address_bcc, From, subject, content, attach_files_path):
+    if mails_address_to:
+        for To in mails_address_to:
+            send_email_to(From, To, subject, content, attach_files_path)
+    elif mails_address_cc:
+        for Cc in mails_address_cc:
+            send_email_cc(From, Cc, mails_string_cc, subject, content)
+    elif mails_address_bcc:
+        for Bcc in mails_address_bcc:
+            send_email_bcc(From, Bcc, subject, content)
+
 def run_send_mail_program():
     mails_address_to = []
     mails_address_cc = []
     mails_address_bcc = []
-
+    
     From = input("From: ")
 
-    getEmailTo(mails_address_to)
-    getEmailCc(mails_address_cc)
-    getEmailBcc(mails_address_bcc)
+    get_Email_To(mails_address_to)
+    get_Email_Cc(mails_address_cc)
+    mails_string_cc = ','.join(mails_address_cc)
+    get_Email_Bcc(mails_address_bcc)
    
     subject = input("Subject: ")
     content = input("Content: ")
-    #attach_files = input("Attack files (comma-separated): ").split(',')
 
-    for To in mails_address_to:
-        send_email_to(From, To, subject, content)
+    attach_files_path = get_Attached_File()
 
-    for Cc in mails_address_cc:
-        send_email_cc(From, Cc, subject, content)
+    for path in attach_files_path:
+        print(path)
 
-    for Bcc in mails_address_bcc:
-        send_email_bcc(From, Bcc, subject, content)
+    print("Complete!")
+
+
+    send_email(mails_address_to, mails_address_cc, mails_string_cc, mails_address_bcc, From, subject, content, attach_files_path)
+
+
 
 
 # def getUserInfo():
