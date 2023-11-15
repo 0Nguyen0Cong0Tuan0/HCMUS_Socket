@@ -218,7 +218,6 @@ def send_image_file(server_socket, email_data, file, content):
     check_send_content(email_data, server_socket, content)
     server_socket.send(f"{attach_image_in_email(file)}--{BOUNDARY}".encode())    
 
-
 def send_zip_file(server_socket, email_data, file, content):
     check_send_content(email_data, server_socket, content)
     server_socket.send(f"{attach_zip_in_email(file)}--{BOUNDARY}".encode())    
@@ -334,6 +333,7 @@ def send_email(mails_address_to, mails_address_cc, mails_string_cc, mails_addres
         for Bcc in mails_address_bcc:
             send_email_bcc(From, Bcc, subject, content)
 
+#----------------------------
 def run_send_mail_program():
     mails_address_to = []
     mails_address_cc = []
