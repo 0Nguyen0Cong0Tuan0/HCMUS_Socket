@@ -11,8 +11,12 @@ USER_AGENT = "Mozilla Thunderbird"
 CONTENT_LANGUAGE = "en-US"
 CONTENT_TYPE = "text/plain; charset=UTF-8; format=flowed"
 CONTENT_FILE = "text/plain; charset=UTF-8; name="
+CONTENT_PDF = "application/pdf; name="
+CONTENT_JPG = "image/jpeg; name="
+CONTENT_ZIP = "application/x-zip-compressed; name="
 CONTENT_TRANSFER_ENCODING = "7bit"
 NOTICE = "This is a multi-part message in MIME format."
+SEND_CONTENT = False
 
 def get_Email_To(mails_address_to):
     #To = input("To: ")
@@ -103,7 +107,8 @@ def get_Valid_File(attach_files):
 
     return new_attach_files
 
-def attach_file_in_email(file_path):
+#----------------------------
+def encode_and_header_attach_file(file_path, content_type):
     if os.path.exists(file_path):
         with open(file_path, 'rb') as at:
             file_content = at.read()
@@ -112,14 +117,39 @@ def attach_file_in_email(file_path):
 
             file_content_with_newlines = '\r\n'.join(file_content_encode[i:i+100] for i in range(0, len(file_content_encode), 100))
 
-            attachment_header = f"\r\nContent-Type: {CONTENT_FILE}\"{os.path.basename(file_path)}\"" \
+            attachment_header = f"\r\nContent-Type: {content_type}\"{os.path.basename(file_path)}\"" \
                                f"\r\nContent-Disposition: attachment; filename=\"{os.path.basename(file_path)}\"" \
                                "\r\nContent-Transfer-Encoding: base64\r\n\r\n"
             return attachment_header + file_content_with_newlines + "\r\n\r\n"
+
+def attach_txt_docx_in_email(file_path):
+    if os.path.exists(file_path):
+        return encode_and_header_attach_file(file_path, CONTENT_FILE)
     else:
         print("The file does not exist")
         return ""
-    
+
+def attach_pdf_in_email(file_path):
+    if os.path.exists(file_path):
+        return encode_and_header_attach_file(file_path, CONTENT_PDF)
+    else:
+        print("The file does not exist")
+        return ""
+
+def attach_image_in_email(file_path):
+    if os.path.exists(file_path):
+        return encode_and_header_attach_file(file_path, CONTENT_JPG)
+    else:
+        print("The file does not exist")
+        return ""
+
+def attach_zip_in_email(file_path):
+    if os.path.exists(file_path):
+        return encode_and_header_attach_file(file_path, CONTENT_ZIP)
+    else:
+        print("The file does not exist")
+        return ""
+
 
 #----------------------------
 def send_header(server_socket, From, To):
@@ -143,7 +173,7 @@ def send_header(server_socket, From, To):
     if not response.startswith('354'):
         raise Exception(f"Error sending data: {response}")
 
-def send_header_info_normal_mail(server_socket):
+def send_header_normal_mail(server_socket):
     current_time = datetime.now()
     time_format = current_time.strftime("Date: %a, %d %b %Y %H:%M:%S +0700")
     server_socket.send(f"{time_format}\r\n".encode())
@@ -152,27 +182,11 @@ def send_header_info_normal_mail(server_socket):
     server_socket.send(f"User-Agent: {USER_AGENT}\r\n".encode())
     server_socket.send(f"Content-Language: {CONTENT_LANGUAGE}\r\n".encode())
 
-def send_header_info_attached_file_mail(server_socket):
+def send_header_attached_file_mail(server_socket):
     server_socket.send(f"Content-Type: multipart/mixed; boundary=\"{BOUNDARY}\"\r\n".encode())
-    send_header_info_normal_mail(server_socket)
-
-
+    send_header_normal_mail(server_socket)
 
 #----------------------------
-def send_attach_file_mail(server_socket, email_data, attach_files, content):
-    email_data += f"\r\n{NOTICE}\r\n--{BOUNDARY}\r\nContent-Type: {CONTENT_TYPE}\r\nContent-Transfer-Encoding: {CONTENT_TRANSFER_ENCODING}\r\n\r\n{content}\r\n\r\n"
-    server_socket.sendall(f"{email_data}".encode())
-    server_socket.send(f"--{BOUNDARY}".encode())
-    
-    for file_path in attach_files: 
-        server_socket.send(f"{attach_file_in_email(file_path)}--{BOUNDARY}".encode())    
-
-    server_socket.send(f"--{BOUNDARY}--\r\n.\r\n".encode())   
-
-    response = server_socket.recv(HEADER).decode()
-    if not response.startswith('250'):
-        raise Exception(f"Error sending email: {response}")
-
 def send_normal_mail(server_socket, email_data, content):
     email_data += f"Content-Type: {CONTENT_TYPE}\r\nContent-Transfer-Encoding: {CONTENT_TRANSFER_ENCODING}\r\n\r\n{content}\r\n\r\n"
     server_socket.sendall(f"{email_data}.\r\n".encode())
@@ -181,14 +195,54 @@ def send_normal_mail(server_socket, email_data, content):
     if not response.startswith('250'):
             raise Exception(f"Error sending email: {response}")
 
+def check_send_content(email_data, server_socket, content):
+    global SEND_CONTENT
+    if not SEND_CONTENT:
+        send_content_of_attached_mail(email_data, server_socket, content)
+        SEND_CONTENT = True
+
+def send_content_of_attached_mail(email_data, server_socket, content):
+    email_data += f"\r\n{NOTICE}\r\n--{BOUNDARY}\r\nContent-Type: {CONTENT_TYPE}\r\nContent-Transfer-Encoding: {CONTENT_TRANSFER_ENCODING}\r\n\r\n{content}\r\n\r\n"
+    server_socket.sendall(f"{email_data}".encode())
+    server_socket.send(f"--{BOUNDARY}".encode())
+
+def send_txt_docx_file(server_socket, email_data, file, content):
+    check_send_content(email_data, server_socket, content)
+    server_socket.send(f"{attach_txt_docx_in_email(file)}--{BOUNDARY}".encode())    
+    
+def send_pdf_file(server_socket, email_data, file, content):
+    check_send_content(email_data, server_socket, content)
+    server_socket.send(f"{attach_pdf_in_email(file)}--{BOUNDARY}".encode())    
+
+def send_image_file(server_socket, email_data, file, content):
+    check_send_content(email_data, server_socket, content)
+    server_socket.send(f"{attach_image_in_email(file)}--{BOUNDARY}".encode())    
 
 
+def send_zip_file(server_socket, email_data, file, content):
+    check_send_content(email_data, server_socket, content)
+    server_socket.send(f"{attach_zip_in_email(file)}--{BOUNDARY}".encode())    
+
+def send_all_file(server_socket, attach_files, email_data, content):
+    send_header_attached_file_mail(server_socket)
+    for file in attach_files:
+        if file.endswith(('.txt', '.docx')):
+            send_txt_docx_file(server_socket, email_data, file, content)
+        elif file.endswith('.pdf'):
+            send_pdf_file(server_socket, email_data, file, content)
+        elif file.endswith('.jpg'):
+            send_image_file(server_socket, email_data, file, content)
+        elif file.endswith('.zip'):
+            send_zip_file(server_socket, email_data, file, content)
+
+    server_socket.send(f"--{BOUNDARY}--\r\n.\r\n".encode())   
+    response = server_socket.recv(HEADER).decode()
+    if not response.startswith('250'):
+            raise Exception(f"Error sending email: {response}")
 
 #----------------------------
 def send_email_to(From, To, subject, content, attach_files):
-    check_attach_file = False
-    if attach_files != []:
-        check_attach_file = True
+    check_attach_file = bool(attach_files)
 
     email_data = f"To: {To}\r\nFrom: {From}\r\nSubject: {subject}\r\n"
 
@@ -200,12 +254,10 @@ def send_email_to(From, To, subject, content, attach_files):
         send_header(server_socket, From, To)
         
         if check_attach_file == True:
-            send_header_info_attached_file_mail(server_socket)
-            send_attach_file_mail(server_socket, email_data, attach_files, content)
+            send_all_file(server_socket, attach_files, email_data, content)
         else:
-            send_header_info_normal_mail(server_socket)
+            send_header_normal_mail(server_socket)
             send_normal_mail(server_socket, email_data, content)
-            return
     
 def send_email_cc(From, Cc, mails_address_cc, subject, content):
     with socket.create_connection(("127.0.0.1", 2225)) as server_socket:
