@@ -20,7 +20,7 @@ SEND_CONTENT = False
 
 def get_Email_To(mails_address_to):
     #To = input("To: ")
-    To = "nguyencongtuan0810@gmail.com"
+    To = "nctuan081004@gmail.com"
     mails_address_to.append(To)
 
 def get_Email_Cc(mails_address_cc):
@@ -149,7 +149,6 @@ def attach_zip_in_email(file_path):
     else:
         print("The file does not exist")
         return ""
-
 
 #----------------------------
 def send_header(server_socket, From, To):
