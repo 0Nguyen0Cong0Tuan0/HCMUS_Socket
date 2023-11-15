@@ -58,175 +58,24 @@ import base64
 # if content is not None:
 #     print(f"File content: {content}")
 
-# def get_Attached_File():
-#     attach_files_path = []
-#     files_input = input("Attach files: ").split(',')
-#     attach_files_path.extend([file_path.strip() for file_path in files_input])
-#     new_path = get_Valid_File(attach_files_path)
-
-#     return new_path
-
-# def get_Valid_File(attach_files):  
-#     count = 0    
-#     new_attach_files = []
-
-#     for file_path in attach_files:
-#         file_path = file_path.strip()
-
-#         if os.path.exists(file_path):
-#             file_size = os.path.getsize(file_path) / (1024**2)
-#             if file_size <= 3:
-#                 new_attach_files.append(file_path)
-#             else:
-#                 print(f"The size of the attached file {file_path} is too large")
-#                 print("Do you want to remove or choose another file? (0: remove, 1: choose): ", end="")
-
-#                 while True:
-#                     choice = int(input())
-
-#                     if choice == 0:
-#                         remove_file = attach_files[count]
-#                         attach_files = [file for file in attach_files if file is not remove_file]
-#                         break
-#                     elif choice == 1:
-#                         while True:
-#                             add_file = input("File you want to attach: ")
-#                             if os.path.exists(add_file):
-#                                 file_size = os.path.getsize(add_file) / (1024**2)
-#                                 if file_size <= 3:
-#                                     new_attach_files.append(add_file)
-#                                     break
-#                                 else:
-#                                     print(f"The size of the attached file {file_path} is too large")
-#                             else:
-#                                 print(f"{add_file} does not exist.")
-#                     else:
-#                         print("Invalid choice!!! Try again")
-#         else:
-#             print(f"{file_path} does not exist.")
-#             print(f"Do you want to change the file {file_path}? (0: no, 1: yes): ", end="")
-
-#             while True:
-#                 choice_change = int(input())
-#                 if choice_change == 0:
-#                     break
-#                 elif choice_change == 1:
-#                     while True:
-#                         add_file = input("File you want to attach: ")
-#                         if os.path.exists(add_file):
-#                             file_size = os.path.getsize(add_file) / (1024**2)
-#                             if file_size <= 3:
-#                                 new_attach_files.append(add_file)
-#                                 break
-#                             else:
-#                                 print(f"The size of the attached file {file_path} is too large")
-#                         else:
-#                             print(f"{add_file} does not exist.")
-#                     break
-            
-
-#         count += 1
-
-#     return new_attach_files
-
-# def attach_file_in_email(file_path):
-#     if os.path.exists(file_path):
-#         with open(file_path, 'rb') as at:
-#             file_content = at.read()
-
-#             file_content_encode = base64.b64encode(file_content).decode()
-
-#             attachment_header = "\r\nContent-Type: application/octet-stream" \
-#                                f"\r\nContent-Disposition: attachment; filename=\"{os.path.basename(file_path)}\"" \
-#                                "\r\nContent-Transfer-Encoding: base64\r\n\r\n"
-#             return attachment_header + file_content_encode + "\r\n"
-#     else:
-#         print("The file does not exist")
-#         return ""
-
-# def run_send_mail_program():
-#     attach_files_path = get_Attached_File()
-
-#     for path in attach_files_path:
-#         hello = attach_file_in_email(path)
-#         print(hello)
-
+def separate_files(file_string):
+    files = [file.strip() for file in file_string.split(',')]
     
+    attach_txt = [file for file in files if file.endswith('.txt')]
+    attach_docx = [file for file in files if file.endswith('.docx')]
 
+    return attach_txt, attach_docx
 
-# run_send_mail_program()
-import socket
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
-from datetime import datetime
+file_string = "hello.txt, chao.docx, tambiet.docx, seeyou.txt"
+attach_txt, attach_docx = separate_files(file_string)
 
-HEADER = 1024
-FORMAT = "utf-8"
-BOUNDARY = "--------------5sWLTDpPOowcnjH7yr7J87Aq"
-MIME_VERSION = "1.0"
-USER_AGENT = "Mozilla Thunderbird"
-CONTENT_LANGUAGE = "en-US"
-CONTENT_TYPE = "text/plain; charset=UTF-8; format=flowed"
-CONTENT_TRANSFER_ENCODING = "7bit"
-NOTICE = "This is a multi-part message in MIME format."
+print("attach_txt =", attach_txt)
+print("attach_docx =", attach_docx)
 
-current_time = datetime.now()
-formatted_time = current_time.strftime("Date: %a, %d %b %Y %H:%M:%S")
-
-print(formatted_time)
-
-def send_email_to(From, To, subject, content, attach_files):
-    msg = MIMEMultipart()
-    msg["From"] = From
-    msg["To"] = To
-    msg["Subject"] = subject
-    msg["MIME-Version"] = MIME_VERSION
-    msg["User-Agent"] = USER_AGENT
-    msg["Content-Language"] = CONTENT_LANGUAGE
-
-    if attach_files:
-        msg.attach(MIMEText(content, "plain", "UTF-8"))
-
-        for file_path in attach_files:
-            attachment = MIMEBase("application", "octet-stream")
-            attachment.set_payload(open(file_path, "rb").read())
-            encoders.encode_base64(attachment)
-            attachment.add_header("Content-Disposition", f"attachment; filename={file_path}")
-            msg.attach(attachment)
-    else:
-        msg.attach(MIMEText(content, "plain", "UTF-8"))
-
-    email_data = msg.as_string()
-
-    with socket.create_connection(("127.0.0.1", 2225)) as server_socket:
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('220'):
-            raise Exception(f"Error connecting to server: {response}")
-
-        server_socket.send("EHLO [127.0.0.1]\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending EHLO: {response}")
-
-        server_socket.send(f"MAIL FROM:<{From}>\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending mail address: {response}")
-
-        server_socket.send(f"RCPT TO:<{To}>\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending mail address: {response}")
-
-        server_socket.send("DATA\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('354'):
-            raise Exception(f"Error sending data: {response}")
-
-        server_socket.sendall(f"{email_data}\r\n.\r\n".encode())
-
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending email: {response}")
+# def getUserInfo():
+#     Username = "Nguyen Cong Tuan <nctuan22@clc.fitus.edu.vn>"
+#     Password = "123456"
+#     MailServer = "127.0.0.1"
+#     SMTP = "2225"
+#     POP3 = "3335"
+#     AuToload = 10

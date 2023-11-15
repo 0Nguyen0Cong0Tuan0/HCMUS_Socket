@@ -110,78 +110,103 @@ def attach_file_in_email(file_path):
 
             file_content_encode = base64.b64encode(file_content).decode(FORMAT)
 
+            file_content_with_newlines = '\r\n'.join(file_content_encode[i:i+100] for i in range(0, len(file_content_encode), 100))
+
             attachment_header = f"\r\nContent-Type: {CONTENT_FILE}\"{os.path.basename(file_path)}\"" \
                                f"\r\nContent-Disposition: attachment; filename=\"{os.path.basename(file_path)}\"" \
                                "\r\nContent-Transfer-Encoding: base64\r\n\r\n"
-            return attachment_header + file_content_encode + "\r\n\r\n"
+            return attachment_header + file_content_with_newlines + "\r\n\r\n"
     else:
         print("The file does not exist")
         return ""
+    
+
+#----------------------------
+def send_header(server_socket, From, To):
+    server_socket.send("EHLO [127.0.0.1]\r\n".encode())
+    response = server_socket.recv(HEADER).decode()
+    if not response.startswith('250'):
+        raise Exception(f"Error sending EHLO: {response}")
+    
+    server_socket.send(f"MAIL FROM:<{From}>\r\n".encode())
+    response = server_socket.recv(HEADER).decode()
+    if not response.startswith('250'):
+        raise Exception(f"Error sending mail address: {response}")
+    
+    server_socket.send(f"RCPT TO:<{To}>\r\n".encode())
+    response = server_socket.recv(HEADER).decode()
+    if not response.startswith('250'):
+        raise Exception(f"Error sending mail address: {response}")
+    
+    server_socket.send("DATA\r\n".encode())
+    response = server_socket.recv(HEADER).decode()
+    if not response.startswith('354'):
+        raise Exception(f"Error sending data: {response}")
+
+def send_header_info_normal_mail(server_socket):
+    current_time = datetime.now()
+    time_format = current_time.strftime("Date: %a, %d %b %Y %H:%M:%S +0700")
+    server_socket.send(f"{time_format}\r\n".encode())
+
+    server_socket.send(f"MIME-Version: {MIME_VERSION}\r\n".encode())
+    server_socket.send(f"User-Agent: {USER_AGENT}\r\n".encode())
+    server_socket.send(f"Content-Language: {CONTENT_LANGUAGE}\r\n".encode())
+
+def send_header_info_attached_file_mail(server_socket):
+    server_socket.send(f"Content-Type: multipart/mixed; boundary=\"{BOUNDARY}\"\r\n".encode())
+    send_header_info_normal_mail(server_socket)
+
+
+
+#----------------------------
+def send_attach_file_mail(server_socket, email_data, attach_files, content):
+    email_data += f"\r\n{NOTICE}\r\n--{BOUNDARY}\r\nContent-Type: {CONTENT_TYPE}\r\nContent-Transfer-Encoding: {CONTENT_TRANSFER_ENCODING}\r\n\r\n{content}\r\n\r\n"
+    server_socket.sendall(f"{email_data}".encode())
+    server_socket.send(f"--{BOUNDARY}".encode())
+    
+    for file_path in attach_files: 
+        server_socket.send(f"{attach_file_in_email(file_path)}--{BOUNDARY}".encode())    
+
+    server_socket.send(f"--{BOUNDARY}--\r\n.\r\n".encode())   
+
+    response = server_socket.recv(HEADER).decode()
+    if not response.startswith('250'):
+        raise Exception(f"Error sending email: {response}")
 
 def send_normal_mail(server_socket, email_data, content):
     email_data += f"Content-Type: {CONTENT_TYPE}\r\nContent-Transfer-Encoding: {CONTENT_TRANSFER_ENCODING}\r\n\r\n{content}\r\n\r\n"
     server_socket.sendall(f"{email_data}.\r\n".encode())
 
+    response = server_socket.recv(HEADER).decode()
+    if not response.startswith('250'):
+            raise Exception(f"Error sending email: {response}")
+
+
+
+
+#----------------------------
 def send_email_to(From, To, subject, content, attach_files):
     check_attach_file = False
     if attach_files != []:
         check_attach_file = True
+
+    email_data = f"To: {To}\r\nFrom: {From}\r\nSubject: {subject}\r\n"
 
     with socket.create_connection(("127.0.0.1", 2225)) as server_socket:
         response = server_socket.recv(HEADER).decode()
         if not response.startswith('220'):
             raise Exception(f"Error connecting to server: {response}")
         
-        server_socket.send("EHLO [127.0.0.1]\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending EHLO: {response}")
-        
-        server_socket.send(f"MAIL FROM:<{From}>\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending mail address: {response}")
-        
-        server_socket.send(f"RCPT TO:<{To}>\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending mail address: {response}")
-        
-        server_socket.send("DATA\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('354'):
-            raise Exception(f"Error sending data: {response}")
+        send_header(server_socket, From, To)
         
         if check_attach_file == True:
-            server_socket.send(f"Content-Type: multipart/mixed; boundary=\"{BOUNDARY}\"\r\n".encode())
-        
-        current_time = datetime.now()
-        time_format = current_time.strftime("Date: %a, %d %b %Y %H:%M:%S +0700")
-        server_socket.send(f"{time_format}\r\n".encode())
-
-        server_socket.send(f"MIME-Version: {MIME_VERSION}\r\n".encode())
-        server_socket.send(f"User-Agent: {USER_AGENT}\r\n".encode())
-        server_socket.send(f"Content-Language: {CONTENT_LANGUAGE}\r\n".encode())
-        email_data = f"To: {To}\r\nFrom: {From}\r\nSubject: {subject}\r\n"
-
-        if check_attach_file:
-            email_data += f"\r\n{NOTICE}\r\n--{BOUNDARY}\r\nContent-Type: {CONTENT_TYPE}\r\nContent-Transfer-Encoding: {CONTENT_TRANSFER_ENCODING}\r\n\r\n{content}\r\n\r\n"
-            server_socket.sendall(f"{email_data}".encode())
-            server_socket.send(f"--{BOUNDARY}".encode())
-
-            for file_path in attach_files:  
-                server_socket.send(f"{attach_file_in_email(file_path)}--{BOUNDARY}--\r\n.\r\n".encode())        
+            send_header_info_attached_file_mail(server_socket)
+            send_attach_file_mail(server_socket, email_data, attach_files, content)
         else:
+            send_header_info_normal_mail(server_socket)
             send_normal_mail(server_socket, email_data, content)
             return
-        
-
-        #server_socket.sendall(f"{email_file_txt}.\r\n".encode())
-
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending email: {response}")
-
+    
 def send_email_cc(From, Cc, mails_address_cc, subject, content):
     with socket.create_connection(("127.0.0.1", 2225)) as server_socket:
         response = server_socket.recv(HEADER).decode()
@@ -264,6 +289,7 @@ def run_send_mail_program():
     
     #From = input("From: ")
     From = "nctuan22@clc.fitus.edu.vn"
+
     get_Email_To(mails_address_to)
     get_Email_Cc(mails_address_cc)
     mails_string_cc = ','.join(mails_address_cc)
@@ -274,18 +300,8 @@ def run_send_mail_program():
 
     attach_files_path = get_Attached_File()
 
+
     send_email(mails_address_to, mails_address_cc, mails_string_cc, mails_address_bcc, From, subject, content, attach_files_path)
-
-
-
-
-# def getUserInfo():
-#     Username = "Nguyen Cong Tuan <nctuan22@clc.fitus.edu.vn>"
-#     Password = "123456"
-#     MailServer = "127.0.0.1"
-#     SMTP = "2225"
-#     POP3 = "3335"
-#     AuToload = 10
 
 def main():
     run_send_mail_program()
