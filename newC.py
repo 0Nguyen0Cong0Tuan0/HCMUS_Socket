@@ -256,7 +256,9 @@ def send_email_to(From, To, subject, content, attach_files):
         else:
             send_header_normal_mail(server_socket)
             send_normal_mail(server_socket, email_data, content)
-    
+        
+        server_socket.send("QUIT".encode()) 
+
 def send_email_cc(From, Cc, mails_address_cc, subject, content):
     with socket.create_connection(("127.0.0.1", 2225)) as server_socket:
         response = server_socket.recv(HEADER).decode()
