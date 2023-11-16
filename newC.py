@@ -9,6 +9,7 @@ BOUNDARY = "------------5sWLTDpPOowcnjH7yr7J87Aq"
 MIME_VERSION = "1.0"
 USER_AGENT = "Mozilla Thunderbird"
 CONTENT_LANGUAGE = "en-US"
+BCC_NOTICE = "undisclosed-recipients: ;"
 CONTENT_TYPE = "text/plain; charset=UTF-8; format=flowed"
 CONTENT_FILE = "text/plain; charset=UTF-8; name="
 CONTENT_PDF = "application/pdf; name="
@@ -19,9 +20,9 @@ NOTICE = "This is a multi-part message in MIME format."
 SEND_CONTENT = False
 
 def get_Email_To(mails_address_to):
-    #To = input("To: ")
-    To = "nctuan081004@gmail.com"
-    mails_address_to.append(To)
+    To = input("TO: ").split(',')
+    To = [email.strip() for email in To]
+    mails_address_to.extend(To)
 
 def get_Email_Cc(mails_address_cc):
     Cc = input("CC: ").split(',')
@@ -29,8 +30,7 @@ def get_Email_Cc(mails_address_cc):
     mails_address_cc.extend(Cc)
     
 def get_Email_Bcc(mails_address_bcc):
-    Bcc = input("BCC: ")
-    Bcc = Bcc.split(',')
+    Bcc = input("BCC: ").split(',')
     Bcc = [email.strip() for email in Bcc]
     mails_address_bcc.extend(Bcc)
 
@@ -151,7 +151,7 @@ def attach_zip_in_email(file_path):
         return ""
 
 #----------------------------
-def send_header(server_socket, From, To):
+def send_header(server_socket, From, Type):
     server_socket.send("EHLO [127.0.0.1]\r\n".encode())
     response = server_socket.recv(HEADER).decode()
     if not response.startswith('250'):
@@ -162,10 +162,11 @@ def send_header(server_socket, From, To):
     if not response.startswith('250'):
         raise Exception(f"Error sending mail address: {response}")
     
-    server_socket.send(f"RCPT TO:<{To}>\r\n".encode())
-    response = server_socket.recv(HEADER).decode()
-    if not response.startswith('250'):
-        raise Exception(f"Error sending mail address: {response}")
+    for type in Type:
+        server_socket.send(f"RCPT TO:<{type}>\r\n".encode())
+        response = server_socket.recv(HEADER).decode()
+        if not response.startswith('250'):
+            raise Exception(f"Error sending mail address: {response}")
     
     server_socket.send("DATA\r\n".encode())
     response = server_socket.recv(HEADER).decode()
@@ -242,7 +243,8 @@ def send_all_file(server_socket, attach_files, email_data, content):
 def send_email_to(From, To, subject, content, attach_files):
     check_attach_file = bool(attach_files)
 
-    email_data = f"To: {To}\r\nFrom: {From}\r\nSubject: {subject}\r\n"
+    to_address = ', '.join(To)
+    email_data = f"To: {to_address}\r\nFrom: {From}\r\nSubject: {subject}\r\n"
 
     with socket.create_connection(("127.0.0.1", 2225)) as server_socket:
         response = server_socket.recv(HEADER).decode()
@@ -259,80 +261,54 @@ def send_email_to(From, To, subject, content, attach_files):
         
         server_socket.send("QUIT".encode()) 
 
-def send_email_cc(From, Cc, mails_address_cc, subject, content):
+def send_email_cc(From, Cc, subject, content, attach_files):
+    check_attach_file = bool(attach_files)
+
+    cc_address = ', '.join(Cc)
+    email_data = f"Cc: {cc_address}\r\nFrom: {From}\r\nSubject: {subject}\r\n"
+
     with socket.create_connection(("127.0.0.1", 2225)) as server_socket:
         response = server_socket.recv(HEADER).decode()
         if not response.startswith('220'):
             raise Exception(f"Error connecting To server: {response}")
         
-        server_socket.send("EHLO [127.0.0.1]\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending EHLO: {response}")
-        
-        server_socket.send(f"MAIL FROM:<{From}>\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending mail address: {response}")
-        
-        server_socket.send(f"RCPT TO:<{Cc}>\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending mail address: {response}")
-        
-        server_socket.send("DATA\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('354'):
-            raise Exception(f"Error sending data: {response}")
-        
-        email_data = f"CC: {mails_address_cc}\r\nFrom: {From}\r\nSubject: {subject}\r\n\r\n{content}\r\n"
-        server_socket.sendall(f"{email_data}\r\n.\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending email: {response}")
+        send_header(server_socket, From, Cc)
 
-def send_email_bcc(From, Bcc, subject, content):
+        if check_attach_file == True:
+            send_all_file(server_socket, attach_files, email_data, content)
+        else:
+            send_header_normal_mail(server_socket)
+            send_normal_mail(server_socket, email_data, content)
+        
+        server_socket.send("QUIT".encode()) 
+
+def send_email_bcc(From, Bcc, subject, content, attach_files):
+    check_attach_file = bool(attach_files)
+
+    email_data = f"From: {From}\r\nSubject: {subject}\r\nTo: {BCC_NOTICE}\r\n"
+
     with socket.create_connection(("127.0.0.1", 2225)) as server_socket:
         response = server_socket.recv(HEADER).decode()
         if not response.startswith('220'):
-            raise Exception(f"Error connecting To server: {response}")
+            raise Exception(f"Error connecting to server: {response}")
         
-        server_socket.send("EHLO [127.0.0.1]\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending EHLO: {response}")
-        
-        server_socket.send(f"MAIL FROM:<{From}>\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending mail address: {response}")
-        
-        server_socket.send(f"RCPT TO:<{Bcc}>\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending mail address: {response}")
-        
-        server_socket.send("DATA\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('354'):
-            raise Exception(f"Error sending data: {response}")
-        
-        email_data = f"BCC: {Bcc}\r\nFrom: {From}\r\nSubject: {subject}\r\n\r\n{content}\r\n"
-        server_socket.sendall(f"{email_data}\r\n.\r\n".encode())
-        response = server_socket.recv(HEADER).decode()
-        if not response.startswith('250'):
-            raise Exception(f"Error sending email: {response}")
+        send_header(server_socket, From, Bcc)
 
-def send_email(mails_address_to, mails_address_cc, mails_string_cc, mails_address_bcc, From, subject, content, attach_files_path):
-    if mails_address_to:
-        for To in mails_address_to:
-            send_email_to(From, To, subject, content, attach_files_path)
-    elif mails_address_cc:
-        for Cc in mails_address_cc:
-            send_email_cc(From, Cc, mails_string_cc, subject, content)
-    elif mails_address_bcc:
-        for Bcc in mails_address_bcc:
-            send_email_bcc(From, Bcc, subject, content)
+        if check_attach_file == True:
+            send_all_file(server_socket, attach_files, email_data, content)
+        else:
+            send_header_normal_mail(server_socket)
+            send_normal_mail(server_socket, email_data, content)
+        
+        server_socket.send("QUIT".encode()) 
+        
+def send_email(mails_address_to, mails_address_cc, mails_address_bcc, From, subject, content, attach_files_path):
+    if any(email.strip() for email in mails_address_to):
+        send_email_to(From, mails_address_to, subject, content, attach_files_path)
+    if any(email.strip() for email in mails_address_cc):
+        send_email_cc(From, mails_address_cc, subject, content, attach_files_path)
+    if any(email.strip() for email in mails_address_bcc):
+        send_email_bcc(From, mails_address_bcc, subject, content, attach_files_path)
 
 #----------------------------
 def run_send_mail_program():
@@ -345,7 +321,6 @@ def run_send_mail_program():
 
     get_Email_To(mails_address_to)
     get_Email_Cc(mails_address_cc)
-    mails_string_cc = ','.join(mails_address_cc)
     get_Email_Bcc(mails_address_bcc)
    
     subject = input("Subject: ")
@@ -353,12 +328,10 @@ def run_send_mail_program():
 
     attach_files_path = get_Attached_File()
 
-
-    send_email(mails_address_to, mails_address_cc, mails_string_cc, mails_address_bcc, From, subject, content, attach_files_path)
+    send_email(mails_address_to, mails_address_cc, mails_address_bcc, From, subject, content, attach_files_path)
 
 def main():
     run_send_mail_program()
     
-
 if __name__ == "__main__":
     main()

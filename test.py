@@ -120,3 +120,67 @@ import base64
 #     email_filename = os.path.join(save_folder, f"no_file_{email_id}")
 #     with open(email_filename, 'w') as email_file:
 #         email_file.write(email_content)
+# Cc = "nctuan081004@gmail.com, nguyencongtuan0810@gmail.com".split((',', ' '))
+# for cc in Cc:
+#     print(cc)
+
+# email_addresses = ['nguyencongtuan0810@gmail.com', 'nctuan081004@gmail.com']
+
+# to_address = ', '.join(email_addresses)
+
+# print(to_address)
+
+# def get_Email_To(mails_address_to):
+#     To = input("TO: ").split(',')
+#     To = [email.strip() for email in To]
+#     mails_address_to.extend(To)
+
+# mails_address_to = []
+# get_Email_To(mails_address_to)
+
+# print(mails_address_to)
+
+# if any(email.strip() for email in mails_address_to):
+#     print("FULL")
+# else:
+#     print("EMPTY")
+
+
+
+
+#     def save_status_of_mail(sender, subject, type):
+#     email_filename = os.path.join(f"{sender}, {subject}.msg")
+
+#     existing_status = set()
+    
+#     STATUS_FILE = os.path.join(SAVE_FOLDER, 'status_file.txt')
+    
+#     if os.path.exists(STATUS_FILE):
+#         with open(STATUS_FILE, 'r') as status_file:
+#             existing_status = set(status_file.read().splitlines())
+
+#     if type == 1:
+#         if email_filename not in existing_status:
+#             email_status = "unread"
+#             with open(STATUS_FILE, 'a') as status_file:
+#                 status_file.write(f"file_{email_filename}, {email_status}\n")
+#         elif not os.path.exists(STATUS_FILE):
+#             with open(STATUS_FILE, 'w') as status_file:
+#                 status_file.write(f"file_{email_filename}, {email_status}\n")
+#     else:
+#         if email_filename not in existing_status:
+#             email_status = "unread"
+#             with open(STATUS_FILE, 'a') as status_file:
+#                 status_file.write(f"no_file_{email_filename}, {email_status}\n")
+#         elif not os.path.exists(STATUS_FILE):
+#             with open(STATUS_FILE, 'w') as status_file:
+#                 status_file.write(f"no_file_{email_filename}, {email_status}\n")
+
+
+
+# greeting = "Xin chao"
+# intro = "Tuan"
+
+# print(f"{greeting}, my name is {intro}")
+# email = "nctuan@gmail/com"
+# server_socket.send(b"'MAIL FROM: ' + email\r\n")
