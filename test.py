@@ -58,19 +58,19 @@ import base64
 # if content is not None:
 #     print(f"File content: {content}")
 
-def separate_files(file_string):
-    files = [file.strip() for file in file_string.split(',')]
+# def separate_files(file_string):
+#     files = [file.strip() for file in file_string.split(',')]
     
-    attach_txt = [file for file in files if file.endswith('.txt')]
-    attach_docx = [file for file in files if file.endswith('.docx')]
+#     attach_txt = [file for file in files if file.endswith('.txt')]
+#     attach_docx = [file for file in files if file.endswith('.docx')]
 
-    return attach_txt, attach_docx
+#     return attach_txt, attach_docx
 
-file_string = "hello.txt, chao.docx, tambiet.docx, seeyou.txt"
-attach_txt, attach_docx = separate_files(file_string)
+# file_string = "hello.txt, chao.docx, tambiet.docx, seeyou.txt"
+# attach_txt, attach_docx = separate_files(file_string)
 
-print("attach_txt =", attach_txt)
-print("attach_docx =", attach_docx)
+# print("attach_txt =", attach_txt)
+# print("attach_docx =", attach_docx)
 
 # def getUserInfo():
 #     Username = "Nguyen Cong Tuan <nctuan22@clc.fitus.edu.vn>"
@@ -79,3 +79,44 @@ print("attach_docx =", attach_docx)
 #     SMTP = "2225"
 #     POP3 = "3335"
 #     AuToload = 10
+
+# def download_content_email_pop3(server_socket, email_id, num_id, save_folder):
+#     server_socket.send(f"RETR {num_id}\r\n".encode())
+#     response = receive_all(server_socket).decode()
+#     response = response.splitlines()
+
+#     email_info = {'Date': '', 'To': '', 'From': '', 'Agent': '', 'Subject': '', 'Content': ''}
+#     mail_content = ''
+#     for line in response:
+#         if line.startswith('Date:'):
+#             email_info['Date'] = line[6:-6].strip()
+#         elif line.startswith('To:'):
+#             start_index = line.find('<')
+#             email_info['To'] = line[start_index + 1:-1].strip()
+#         elif line.startswith('From:'):
+#             start_index = line.find('<')
+#             email_info['From'] = line[start_index + 1:-1].strip()
+#         elif line.startswith('User-Agent:'):
+#             email_info['Agent'] = line[11:].strip()
+#         elif line.startswith('Subject:'):
+#             email_info['Subject'] = line[8:].strip()
+#             continue
+        
+#         if (email_info['Subject'] != ''):
+#             mail_content += line + '\r\n'
+    
+#     content_start = mail_content.find('\r\n\r\n')
+#     email_info['Content'] = mail_content[content_start:].strip()
+
+#     content_end = email_info['Content'].find('\r\n.\r\n')
+#     if content_end == -1:
+#         content_end = email_info['Content'].find('--------------')
+    
+#     email_info['Content'] = email_info['Content'][:content_end].strip()
+
+#     email_content = 'DATE: ' + email_info['Date'] + '\n' + 'USER_AGENT: ' + email_info['Agent'] + '\n\n' + 'TO: ' + email_info['To'] + '\n' \
+#                   + 'FROM: ' + email_info['From'] + '\n\n' + 'Subject: ' + email_info['Subject'] + '\n\n' + 'Content: \n' + email_info['Content']
+
+#     email_filename = os.path.join(save_folder, f"no_file_{email_id}")
+#     with open(email_filename, 'w') as email_file:
+#         email_file.write(email_content)
