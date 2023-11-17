@@ -1,4 +1,6 @@
 import os
+import re
+import base64
 import socket
 
 HEADER = 1024
@@ -22,11 +24,44 @@ def receive_all(socket):
             break
     return data
 
-def extract_email_ids(response):
+def get_email_ids(response):
     lines = response.splitlines()[1:-1] 
     num_ids = [line.split()[0] for line in lines]
     email_ids = [line.split()[1] for line in lines]
     return num_ids, email_ids
+
+def get_email_info(response):
+    pass
+
+def get_sender(response):
+    lines = response.splitlines()[1:]
+    for line in lines:
+        if line.strip().startswith('From: '):
+            start_index = line.find('<') + 1
+            end_index = line.find('>', start_index)
+            sender = line[start_index:end_index].strip()
+            break
+    return sender
+
+def save_attachments(response, email_id):
+    mail_folder = os.path.join(SAVE_FOLDER, f"{email_id} attachment")
+    os.makedirs(mail_folder, exist_ok=True)
+
+    attachment_pattern = re.compile(r'Content-Disposition:.*?attachment; filename="(.*?)"', re.DOTALL)
+    attachments = re.finditer(attachment_pattern, response)
+
+    for match in attachments:
+        attachment_filename = match.group(1)
+        attachment_path = os.path.join(mail_folder, f"{attachment_filename}")
+
+        attachment_start = response.find('\r\n\r\n', match.end()) + 4
+        attachment_end = response.find('\r\n\r\n', attachment_start)
+
+        with open(attachment_path, 'wb') as attachment_file:
+            attachment_data = response[attachment_start:attachment_end]
+            encoded_data = base64.b64decode(attachment_data)
+            attachment_file.write(encoded_data)
+
 
 def download_emails_pop3():
     if not os.path.exists(SAVE_FOLDER):
@@ -67,33 +102,26 @@ def download_emails_pop3():
         if not uidl_response.startswith('+OK'):
             raise Exception(f"Error: {uidl_response}")
 
-        nums_ids, emails_ids = extract_email_ids(uidl_response)
+        nums_ids, emails_ids = get_email_ids(uidl_response)
         for num_id, email_id in zip(nums_ids, emails_ids):
             download_email_pop3(server_socket, num_id, email_id, SAVE_FOLDER)
     
 def download_email_pop3(server_socket, num_id, email_id, SAVE_FOLDER):
     server_socket.send(f"RETR {num_id}\r\n".encode())
     response = receive_all(server_socket).decode()
-    response = response.splitlines()[1:]
+    
+    sender = get_sender(response)
 
-    lines = ''
-    subject = ''
-    sender = ''
-
-    for line in response:
-        if line.strip().startswith('Subject: '):
-            subject += line.strip()[9:]
-        if line.strip().startswith('From: '):
-            start_index = line.find('<') + 1
-            end_index = line.find('>', start_index)
-            sender += line[start_index:end_index].strip()
-        if line.strip().startswith('.'):
-            continue
-        lines += line + '\n'
+    if NOTICE in response:
+        ans = input("The email has the attach files. Do you want to download it? ")
+        if ans.lower() == 'y':
+            save_attachments(response, email_id)
 
     email_filename = os.path.join(SAVE_FOLDER, f"file_{sender}, {email_id}.msg")
-    with open(email_filename, 'w') as email_file:
-        email_file.write(lines)
+    with open(email_filename, 'wb') as email_file:
+        email_file.write(response.encode())
+    
+
 
 def main():
     download_emails_pop3()

@@ -11,7 +11,8 @@ USER_AGENT = "Mozilla Thunderbird"
 CONTENT_LANGUAGE = "en-US"
 BCC_NOTICE = "undisclosed-recipients: ;"
 CONTENT_TYPE = "text/plain; charset=UTF-8; format=flowed"
-CONTENT_FILE = "text/plain; charset=UTF-8; name="
+CONTENT_TXT = "text/plain; charset=UTF-8; name="
+CONTENT_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document; name="
 CONTENT_PDF = "application/pdf; name="
 CONTENT_JPG = "image/jpeg; name="
 CONTENT_ZIP = "application/x-zip-compressed; name="
@@ -122,9 +123,16 @@ def encode_and_header_attach_file(file_path, content_type):
                                "\r\nContent-Transfer-Encoding: base64\r\n\r\n"
             return attachment_header + file_content_with_newlines + "\r\n\r\n"
 
-def attach_txt_docx_in_email(file_path):
+def attach_txt_in_email(file_path):
     if os.path.exists(file_path):
-        return encode_and_header_attach_file(file_path, CONTENT_FILE)
+        return encode_and_header_attach_file(file_path, CONTENT_TXT)
+    else:
+        print("The file does not exist")
+        return ""
+    
+def attach_docx_in_email(file_path):
+    if os.path.exists(file_path):
+        return encode_and_header_attach_file(file_path, CONTENT_DOCX)
     else:
         print("The file does not exist")
         return ""
@@ -206,10 +214,14 @@ def send_content_of_attached_mail(email_data, server_socket, content):
     server_socket.sendall(f"{email_data}".encode())
     server_socket.send(f"--{BOUNDARY}".encode())
 
-def send_txt_docx_file(server_socket, email_data, file, content):
+def send_txt_file(server_socket, email_data, file, content):
     check_send_content(email_data, server_socket, content)
-    server_socket.send(f"{attach_txt_docx_in_email(file)}".encode())    
+    server_socket.send(f"{attach_txt_in_email(file)}".encode())    
     
+def send_docx_file(server_socket, email_data, file, content):
+    check_send_content(email_data, server_socket, content)
+    server_socket.send(f"{attach_docx_in_email(file)}".encode())    
+
 def send_pdf_file(server_socket, email_data, file, content):
     check_send_content(email_data, server_socket, content)
     server_socket.send(f"{attach_pdf_in_email(file)}".encode())    
@@ -225,8 +237,10 @@ def send_zip_file(server_socket, email_data, file, content):
 def send_all_file(server_socket, attach_files, email_data, content):
     send_header_attached_file_mail(server_socket)
     for index, file in enumerate(attach_files):
-        if file.endswith(('.txt', '.docx')):
-            send_txt_docx_file(server_socket, email_data, file, content)
+        if file.endswith('.txt'):
+            send_txt_file(server_socket, email_data, file, content)
+        if file.endswith('.docx'):
+            send_docx_file(server_socket, email_data, file, content)
         elif file.endswith('.pdf'):
             send_pdf_file(server_socket, email_data, file, content)
         elif file.endswith('.jpg'):
