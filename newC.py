@@ -208,23 +208,23 @@ def send_content_of_attached_mail(email_data, server_socket, content):
 
 def send_txt_docx_file(server_socket, email_data, file, content):
     check_send_content(email_data, server_socket, content)
-    server_socket.send(f"{attach_txt_docx_in_email(file)}--{BOUNDARY}".encode())    
+    server_socket.send(f"{attach_txt_docx_in_email(file)}".encode())    
     
 def send_pdf_file(server_socket, email_data, file, content):
     check_send_content(email_data, server_socket, content)
-    server_socket.send(f"{attach_pdf_in_email(file)}--{BOUNDARY}".encode())    
+    server_socket.send(f"{attach_pdf_in_email(file)}".encode())    
 
 def send_image_file(server_socket, email_data, file, content):
     check_send_content(email_data, server_socket, content)
-    server_socket.send(f"{attach_image_in_email(file)}--{BOUNDARY}".encode())    
+    server_socket.send(f"{attach_image_in_email(file)}".encode())    
 
 def send_zip_file(server_socket, email_data, file, content):
     check_send_content(email_data, server_socket, content)
-    server_socket.send(f"{attach_zip_in_email(file)}--{BOUNDARY}".encode())    
+    server_socket.send(f"{attach_zip_in_email(file)}".encode())    
 
 def send_all_file(server_socket, attach_files, email_data, content):
     send_header_attached_file_mail(server_socket)
-    for file in attach_files:
+    for index, file in enumerate(attach_files):
         if file.endswith(('.txt', '.docx')):
             send_txt_docx_file(server_socket, email_data, file, content)
         elif file.endswith('.pdf'):
@@ -233,6 +233,11 @@ def send_all_file(server_socket, attach_files, email_data, content):
             send_image_file(server_socket, email_data, file, content)
         elif file.endswith('.zip'):
             send_zip_file(server_socket, email_data, file, content)
+        
+        if index == len(attach_files) - 1:
+            continue
+        else:
+            server_socket.send(f"--{BOUNDARY}".encode())
 
     server_socket.send(f"--{BOUNDARY}--\r\n.\r\n".encode())   
     response = server_socket.recv(HEADER).decode()
