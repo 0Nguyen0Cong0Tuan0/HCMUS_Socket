@@ -1,5 +1,5 @@
-import os
-import base64
+# import os
+# import base64
 # emails_input = input("Enter emails separated by commas: ")
 
 # # Split the input string into a list of emails
@@ -263,3 +263,124 @@ import base64
 #         elif not os.path.exists(STATUS_FILE):
 #             with open(STATUS_FILE, 'w') as status_file:
 #                 status_file.write(f"no_file_{email_filename}, {email_status}\n")
+
+# import csv
+# import os
+
+# file_path = os.path.join(SAVE_FOLDER, 'students.csv')
+
+# name = input("What's your name? ")
+# home = input("Where's your home? ")
+# think = input("Where's your status? ")
+# check_list = [name, home, think]
+# check_one = [name, home]
+
+# if os.path.exists(file_path):
+#     with open(file_path, "r") as read_file:
+#         reader = csv.reader(read_file)
+#         for row in reader:
+#             if row[:2] == [name, home]:
+#                 print("Data already exists in the file.")
+#                 break
+#         else:
+#             with open(file_path, "a", newline='') as file:
+#                 writer = csv.writer(file)
+#                 writer.writerow(check_list)
+#             print("Data appended to the file.")
+# else:
+#     with open(file_path, "a", newline='') as file:
+#         writer = csv.writer(file)
+#         writer.writerow(check_list)
+#     print("Data appended to the file.")
+
+
+# import uuid
+
+# FROM = "nctuan081004@gmail.com"
+
+# def generate_message_id():
+#     message_id = uuid.uuid4()
+    
+#     formatted_message_id = str(message_id)
+
+#     return formatted_message_id
+
+# def take_domain(From):
+#     domain = From.split('@')[1] 
+
+#     return '@' + domain
+
+# # Example usage
+# message_id = '<' + generate_message_id() + take_domain(FROM) + '>'
+# print(message_id)
+
+# import base64
+
+# def format_name(name,email):
+#     encoded_name = base64.b64encode(name.encode('utf-8')).decode('utf-8')
+    
+#     formatted_string = f'=?UTF-8?B?{encoded_name}?=<{email}>'
+
+#     return formatted_string
+
+# # Example usage
+# name = "Nguyễn Công Tuấn"
+# email = "nctuan22@clc.fitus.edu.vn"
+# formatted_from = format_name(name, email)
+# print(formatted_from)
+
+# students = [{"name": "Nguyen Cong Tuan", "id": "13212424"}, {"name": "DinhNguyenGiaBao", "id": "132124dd12312341434"}]
+
+# print(students[0]["name"])
+
+
+
+content = """
+Content-Type: multipart/mixed; boundary="------------5sWLTDpPOowcnjH7yr7J87Aq"
+Message-ID: <bcb63e55-471a-451a-a9cc-013b034d6ba6@gmail.com>
+Date: Sun, 19 Nov 2023 13:42:13 +0700
+MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Content-Language: en-US
+To: nguyencongtuan0810@gmail.com
+From: =?UTF-8?B?Tmd1eWVuIENvbmcgVHVhbg==?= <nguyencongtuan0810@gmail.com>
+Subject: HELLO
+
+This is a multi-part message in MIME format.
+--------------5sWLTDpPOowcnjH7yr7J87Aq
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+
+WORdjiasdji
+
+afsfas
+
+aa
+a
+
+--------------5sWLTDpPOowcnjH7yr7J87Aq
+Content-Type: image/jpeg; name="conan.jpg"
+Content-Disposition: attachment; filename="conan.jpg"
+Content-Transfer-Encoding: base64
+
+/9j/7gAOQWRvYmUAZAAAAAAB/+ES7kV4aWYAAE1NACoAAAAIAAgBDgACAAAADgAAAG4BOwACAAAAEQAAAHxHRgADAAAAAQAFAACC
+mAACAAAACAAAAI6HaQAEAAAAAQAACeaIJQAEAAAAAQAAEgScnAABAAABRAAAAJbqHAAHAAAIDAAAAdoAAAAAQ29uYW4gRWRvZ2F3
+YQBodHRwczovL3BvcHMudm4vAABQT1BTLlZOACIATgBhAG0AZQA6ACAAUABPAFAAUwAgAEEAUABQACAAVgBOADsAIAAKAEEAZABk
+AHIAZQBzAHMAOgAgAEwApx51ACAANAAsACAAQgBsAG8AYwBrACAAQQAsACAAVADyAGEAIABuAGgA4AAgAFYAaQBlAHQAdABlAGwA
+LAAgAHMA0R4gADIAOAA1ACAASAC7Hm0AIAAyADgANQAgAEMA4QBjAGgAIABNAKEebgBnACAAVABoAOEAbgBnACAAVADhAG0ALAAg
+AFAAaACwAd0ebgBnACAAMQAyACwAIABRAHUArR5uACAAMQAwACwAIABUAGgA4ABuAGgAIABwAGgA0R4gAEgA0x4gAEMAaADtACAA
+TQBpAG4AaAA7ACAACgBQAGgAbwBuAGUAOgAgADAAMgA4ADYAMgA5ADIAMQA2ADUAIgAAABzqAA"""
+
+
+start_marker = "Content-Transfer-Encoding: 7bit"
+end_marker = "--------------5sWLTDpPOowcnjH7yr7J87Aq"
+
+start_index = content.find(start_marker)
+end_index = content.find(end_marker, start_index)
+
+if start_index != -1 and end_index != -1:
+    filtered_content = content[start_index + len(start_marker):end_index].strip()
+else:
+    print("Markers not found in the content.")
+
+print(filtered_content)
