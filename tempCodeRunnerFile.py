@@ -1,0 +1,1 @@
+folder_path = os.path.join(SAVE_FOLDER, filtered_email)

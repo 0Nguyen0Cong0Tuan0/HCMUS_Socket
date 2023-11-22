@@ -335,52 +335,56 @@
 
 
 
-content = """
-Content-Type: multipart/mixed; boundary="------------5sWLTDpPOowcnjH7yr7J87Aq"
-Message-ID: <bcb63e55-471a-451a-a9cc-013b034d6ba6@gmail.com>
-Date: Sun, 19 Nov 2023 13:42:13 +0700
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Content-Language: en-US
-To: nguyencongtuan0810@gmail.com
-From: =?UTF-8?B?Tmd1eWVuIENvbmcgVHVhbg==?= <nguyencongtuan0810@gmail.com>
-Subject: HELLO
+# content = """
+# Content-Type: multipart/mixed; boundary="------------5sWLTDpPOowcnjH7yr7J87Aq"
+# Message-ID: <bcb63e55-471a-451a-a9cc-013b034d6ba6@gmail.com>
+# Date: Sun, 19 Nov 2023 13:42:13 +0700
+# MIME-Version: 1.0
+# User-Agent: Mozilla Thunderbird
+# Content-Language: en-US
+# To: nguyencongtuan0810@gmail.com
+# From: =?UTF-8?B?Tmd1eWVuIENvbmcgVHVhbg==?= <nguyencongtuan0810@gmail.com>
+# Subject: HELLO
 
-This is a multi-part message in MIME format.
---------------5sWLTDpPOowcnjH7yr7J87Aq
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+# This is a multi-part message in MIME format.
+# --------------5sWLTDpPOowcnjH7yr7J87Aq
+# Content-Type: text/plain; charset=UTF-8; format=flowed
+# Content-Transfer-Encoding: 7bit
 
-WORdjiasdji
+# WORdjiasdji
 
-afsfas
+# afsfas
 
-aa
-a
+# aa
+# a
 
---------------5sWLTDpPOowcnjH7yr7J87Aq
-Content-Type: image/jpeg; name="conan.jpg"
-Content-Disposition: attachment; filename="conan.jpg"
-Content-Transfer-Encoding: base64
+# --------------5sWLTDpPOowcnjH7yr7J87Aq
+# Content-Type: image/jpeg; name="conan.jpg"
+# Content-Disposition: attachment; filename="conan.jpg"
+# Content-Transfer-Encoding: base64
 
-/9j/7gAOQWRvYmUAZAAAAAAB/+ES7kV4aWYAAE1NACoAAAAIAAgBDgACAAAADgAAAG4BOwACAAAAEQAAAHxHRgADAAAAAQAFAACC
-mAACAAAACAAAAI6HaQAEAAAAAQAACeaIJQAEAAAAAQAAEgScnAABAAABRAAAAJbqHAAHAAAIDAAAAdoAAAAAQ29uYW4gRWRvZ2F3
-YQBodHRwczovL3BvcHMudm4vAABQT1BTLlZOACIATgBhAG0AZQA6ACAAUABPAFAAUwAgAEEAUABQACAAVgBOADsAIAAKAEEAZABk
-AHIAZQBzAHMAOgAgAEwApx51ACAANAAsACAAQgBsAG8AYwBrACAAQQAsACAAVADyAGEAIABuAGgA4AAgAFYAaQBlAHQAdABlAGwA
-LAAgAHMA0R4gADIAOAA1ACAASAC7Hm0AIAAyADgANQAgAEMA4QBjAGgAIABNAKEebgBnACAAVABoAOEAbgBnACAAVADhAG0ALAAg
-AFAAaACwAd0ebgBnACAAMQAyACwAIABRAHUArR5uACAAMQAwACwAIABUAGgA4ABuAGgAIABwAGgA0R4gAEgA0x4gAEMAaADtACAA
-TQBpAG4AaAA7ACAACgBQAGgAbwBuAGUAOgAgADAAMgA4ADYAMgA5ADIAMQA2ADUAIgAAABzqAA"""
+# /9j/7gAOQWRvYmUAZAAAAAAB/+ES7kV4aWYAAE1NACoAAAAIAAgBDgACAAAADgAAAG4BOwACAAAAEQAAAHxHRgADAAAAAQAFAACC
+# mAACAAAACAAAAI6HaQAEAAAAAQAACeaIJQAEAAAAAQAAEgScnAABAAABRAAAAJbqHAAHAAAIDAAAAdoAAAAAQ29uYW4gRWRvZ2F3
+# YQBodHRwczovL3BvcHMudm4vAABQT1BTLlZOACIATgBhAG0AZQA6ACAAUABPAFAAUwAgAEEAUABQACAAVgBOADsAIAAKAEEAZABk
+# AHIAZQBzAHMAOgAgAEwApx51ACAANAAsACAAQgBsAG8AYwBrACAAQQAsACAAVADyAGEAIABuAGgA4AAgAFYAaQBlAHQAdABlAGwA
+# LAAgAHMA0R4gADIAOAA1ACAASAC7Hm0AIAAyADgANQAgAEMA4QBjAGgAIABNAKEebgBnACAAVABoAOEAbgBnACAAVADhAG0ALAAg
+# AFAAaACwAd0ebgBnACAAMQAyACwAIABRAHUArR5uACAAMQAwACwAIABUAGgA4ABuAGgAIABwAGgA0R4gAEgA0x4gAEMAaADtACAA
+# TQBpAG4AaAA7ACAACgBQAGgAbwBuAGUAOgAgADAAMgA4ADYAMgA5ADIAMQA2ADUAIgAAABzqAA"""
 
 
-start_marker = "Content-Transfer-Encoding: 7bit"
-end_marker = "--------------5sWLTDpPOowcnjH7yr7J87Aq"
+# start_marker = "Content-Transfer-Encoding: 7bit"
+# end_marker = "--------------5sWLTDpPOowcnjH7yr7J87Aq"
 
-start_index = content.find(start_marker)
-end_index = content.find(end_marker, start_index)
+# start_index = content.find(start_marker)
+# end_index = content.find(end_marker, start_index)
 
-if start_index != -1 and end_index != -1:
-    filtered_content = content[start_index + len(start_marker):end_index].strip()
-else:
-    print("Markers not found in the content.")
+# if start_index != -1 and end_index != -1:
+#     filtered_content = content[start_index + len(start_marker):end_index].strip()
+# else:
+#     print("Markers not found in the content.")
 
-print(filtered_content)
+# print(filtered_content)
+
+# file = "fuahifhaiuhfsiuhsaiu"
+# file_content_with_newlines = '\r\n'.join(file[i : i+2] for i in range(0, len(file), 2))
+# print(file_content_with_newlines)

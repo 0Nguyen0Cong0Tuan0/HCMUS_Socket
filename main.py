@@ -4,4 +4,5 @@ def main():
     client = EmailClient()
     client.run_send_mail_program()
 
-main()
+if __name__ == "__main__":
+    main()
