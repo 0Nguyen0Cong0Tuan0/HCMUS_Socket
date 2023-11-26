@@ -26,6 +26,8 @@ def create_connection_to_server(entry_info):
         Messagebox.show_error("No connection could be made because the target machine actively refused it!", "Connection Error")
     except Exception as e:
         Messagebox.show_error(f"An unexpected error occurred: {e}", "Error")
+    
+    server_socket.send("QUIT".encode()) 
 
 def get_info():
     entry_info = {'USERNAME': entry_username.get(), 'EMAIL': entry_email.get(),

@@ -1,43 +1,34 @@
 from MailLib import *
-from tkinter import *
-import ttkbootstrap as tb
-from ttkbootstrap.scrolled import ScrolledText
-from tkinter import filedialog
-from MailSender import *
-
-window_width = 1200
-window_height = 700
-window_size = str(window_width) + 'x' + str(window_height)
-color = "primary"
-font_interface = 'GOUDY STOUT'
-font_type = 'Arial Greek'
+from MailReceiver import *
 
 class EmailSendInfo:
     @staticmethod
     def get_email_to(mails_address_to, to_email):
-        To = [email.strip() for email in to_email]
-        mails_address_to.extend(To)
-    
-    def get_email_cc(mails_address_cc):
-        Cc = input("CC: ").split(',')
-        Cc = [email.strip() for email in Cc]
-        mails_address_cc.extend(Cc)
+        if to_email is not None:
+            to_email = to_email.split(',')
+            To = [email.strip() for email in to_email]
+            mails_address_to.extend(To)
     
     @staticmethod
-    def get_email_bcc(mails_address_bcc):
-        Bcc = input("BCC: ").split(',')
-        Bcc = [email.strip() for email in Bcc]
-        mails_address_bcc.extend(Bcc)
+    def get_email_cc(mails_address_cc, cc_email):
+        if cc_email is not None:
+            cc_email = cc_email.split(',')
+            Cc = [email.strip() for email in cc_email]
+            mails_address_cc.extend(Cc)
     
     @staticmethod
-    def get_attached_file():
-        attach_files_path = []
-        files_input = input("Attach files: ").split(',')
-        if files_input == ['']:
+    def get_email_bcc(mails_address_bcc, bcc_email):
+        if bcc_email is not None:
+            bcc_email = bcc_email.split(',')
+            Bcc = [email.strip() for email in bcc_email]
+            mails_address_bcc.extend(Bcc)
+    
+    @staticmethod
+    def get_attached_file(entry_filename):
+        if entry_filename == ['']:
             return []
         else:
-            attach_files_path.extend([file_path.strip() for file_path in files_input])
-            new_path = EmailSendInfo.get_valid_file(attach_files_path)
+            new_path = EmailSendInfo.get_valid_file(entry_filename)
             return new_path
     
     @staticmethod
@@ -295,15 +286,21 @@ class EmailInterface:
             initialdir="/Socket", title="Select A File", filetypes=(("*", "*"), ("all files", "*.*"))
         )
         EmailInterface.filename_list.append(send_file.filename + '  ')
-        EmailInterface.update_label_to()
+        EmailInterface.update_label_to(send_file)
 
     @staticmethod
-    def update_label_to():
+    def update_label_to(send_file):
         filenames = ''.join(EmailInterface.filename_list)
         
         max_display_length = 115
         filenames_with_newlines = '\n'.join([filenames[i:i + max_display_length] for i in range(0, len(filenames), max_display_length)])
-        my_label_to.config(text=filenames_with_newlines)
+
+        if send_file is send_to_tab:
+            my_label_to.config(text=filenames_with_newlines)
+        elif send_file is send_cc_tab:
+            my_label_cc.config(text=filenames_with_newlines)
+        elif send_file is send_bcc_tab:
+            my_label_bcc.config(text=filenames_with_newlines)
 
     @staticmethod
     def to_tab(send_to_tab):
@@ -335,7 +332,7 @@ class EmailInterface:
         entry_content.grid(row=2, column=1, padx=10, pady=10, sticky="w")
         
         get_file_button = tb.Button(send_to_tab, bootstyle="light, outline, inverse", 
-                        text='Select A File', padding=10, command=lambda: open(send_to_tab))
+                        text='Select A File', padding=10, command=lambda: EmailInterface.open(send_to_tab))
         get_file_button.grid(row=3, column=1, padx=10, pady=10, sticky="w")
 
         global my_label_to
@@ -343,12 +340,10 @@ class EmailInterface:
         my_label_to.grid(row=4, column=1, padx=10, pady=10, sticky="w")
 
         submit_mail = tb.Button(send_to_tab, bootstyle="info outline", 
-                        text='SUBMIT', padding=10, command=lambda: EmailClient_Send.run_send_mail_program(entry_to.get(), entry_subject.get(), entry_content.get("1.0", "end-1c")))
+                        text='SUBMIT', padding=10, command=lambda: EmailClient_Send.run_send_mail_program(entry_to.get(),
+                         None, None, entry_subject.get(), entry_content.get("1.0", "end-1c"), EmailInterface.filename_list))
         submit_mail.grid(row=4, column=2, padx=10, pady=10, sticky="w")
 
-    @staticmethod
-    def to_submit():
-        pass
     @staticmethod
     def cc_tab(send_cc_tab):
         # CC LABEL
@@ -379,7 +374,7 @@ class EmailInterface:
         entry_content_cc.grid(row=2, column=1, padx=10, pady=10, sticky="w")
         
         get_file_button_cc = tb.Button(send_cc_tab, bootstyle="light, outline, inverse", 
-                        text='Select A File', padding=10, command=lambda: open(send_cc_tab))
+                        text='Select A File', padding=10, command=lambda: EmailInterface.open(send_cc_tab))
         get_file_button_cc.grid(row=3, column=1, padx=10, pady=10, sticky="w")
 
         global my_label_cc
@@ -387,7 +382,8 @@ class EmailInterface:
         my_label_cc.grid(row=4, column=1, padx=10, pady=10, sticky="w")
 
         submit_mail = tb.Button(send_cc_tab, bootstyle="info outline", 
-                        text='SUBMIT', padding=10)
+                        text='SUBMIT', padding=10, command=lambda: EmailClient_Send.run_send_mail_program(None, entry_cc.get(),
+                         None, entry_subject_cc.get(), entry_content_cc.get("1.0", "end-1c"), EmailInterface.filename_list))
         submit_mail.grid(row=4, column=2, padx=10, pady=10, sticky="w")
 
     @staticmethod
@@ -420,7 +416,7 @@ class EmailInterface:
         entry_content_bcc.grid(row=2, column=1, padx=10, pady=10, sticky="w")
         
         get_file_button_bcc = tb.Button(send_bcc_tab, bootstyle="light, outline, inverse", 
-                        text='Select A File', padding=10, command=lambda: open(send_bcc_tab))
+                        text='Select A File', padding=10, command=lambda: EmailInterface.open(send_bcc_tab))
         get_file_button_bcc.grid(row=3, column=1, padx=10, pady=10, sticky="w")
 
         global my_label_bcc
@@ -428,7 +424,8 @@ class EmailInterface:
         my_label_bcc.grid(row=4, column=1, padx=10, pady=10, sticky="w")
         
         submit_mail = tb.Button(send_bcc_tab, bootstyle="info outline", 
-                        text='SUBMIT', padding=10)
+                        text='SUBMIT', padding=10, command=lambda: EmailClient_Send.run_send_mail_program(None,
+                         None, entry_bcc.get(), entry_subject_bcc.get(), entry_content_bcc.get("1.0", "end-1c"), EmailInterface.filename_list))
         submit_mail.grid(row=4, column=2, padx=10, pady=10, sticky="w")
 
     @staticmethod
@@ -462,15 +459,10 @@ class EmailInterface:
         EmailInterface.cc_tab(send_cc_tab)
         EmailInterface.bcc_tab(send_bcc_tab)
 
-
-        
         # Configure column weights to make them expand evenly
         send_to_tab.columnconfigure(0, weight=1)
         send_to_tab.columnconfigure(1, weight=1)
 
-    @staticmethod
-    def them():
-        pass
     
     @staticmethod
     def we():
@@ -497,11 +489,11 @@ class EmailInterface:
         get_send.grid(row=1, columnspan=4, pady=10, padx=100)
 
         get_all_download = tb.Button(frame_menu, bootstyle="light, outline, inverse", 
-                            text='ALL RECEIVED MAIL', padding=10, command=EmailInterface.them)
+                            text='ALL RECEIVED MAIL', padding=10)
         get_all_download.grid(row=2, columnspan=4, pady=10, padx=100)
 
         get_download = tb.Button(frame_menu, bootstyle="light, outline, inverse", 
-                            text='DOWNLOAD MAIL', padding=10, command=EmailInterface.we)
+                            text='DOWNLOAD MAIL', padding=10, command=EmailClient_Download.download_tab)
         get_download.grid(row=3, columnspan=4, pady=10, padx=100)
 
         get_exit = tb.Button(frame_menu, bootstyle="light, outline, inverse", 
@@ -511,12 +503,7 @@ class EmailInterface:
         mainloop()
 
 class EmailClient_Send:
-    def __init__(self):
-        self.info = EmailSendInfo()
-        self.encoder = EmailEncoder()
-        self.sender = EmailSender()
-    
-    def send_email_to(self, from_address, to_addresses, subject, content, attach_files):
+    def send_email_to(from_address, to_addresses, subject, content, attach_files):
         check_attach_file = bool(attach_files)
         to_address = ', '.join(to_addresses)
         user_name_encode = EmailSendInfo.encode_user_name()
@@ -527,17 +514,17 @@ class EmailClient_Send:
             if not response.startswith('220'):
                 raise Exception(f"Error connecting to server: {response}")
 
-            self.sender.send_header(server_socket, from_address, to_addresses)
+            EmailSender.send_header(server_socket, from_address, to_addresses)
 
             if check_attach_file == True:
-                self.sender.send_all_file(server_socket, from_address, attach_files, email_data, content)
+                EmailSender.send_all_file(server_socket, from_address, attach_files, email_data, content)
             else:
-                self.sender.send_header_normal_mail(server_socket, from_address)
-                self.sender.send_normal_mail(server_socket, email_data, content)
+                EmailSender.send_header_normal_mail(server_socket, from_address)
+                EmailSender.send_normal_mail(server_socket, email_data, content)
 
             server_socket.send("QUIT".encode())
 
-    def send_email_cc(self, from_address, cc_addresses, subject, content, attach_files):
+    def send_email_cc(from_address, cc_addresses, subject, content, attach_files):
         check_attach_file = bool(attach_files)
         cc_address = ', '.join(cc_addresses)
         email_data = f"Cc: {cc_address}\r\nFrom: {from_address}\r\nSubject: {subject}\r\n"
@@ -547,17 +534,17 @@ class EmailClient_Send:
             if not response.startswith('220'):
                 raise Exception(f"Error connecting To server: {response}")
 
-            self.sender.send_header(server_socket, from_address, cc_addresses)
+            EmailSender.send_header(server_socket, from_address, cc_addresses)
 
             if check_attach_file == True:
-                self.sender.send_all_file(server_socket, from_address, attach_files, email_data, content)
+                EmailSender.send_all_file(server_socket, from_address, attach_files, email_data, content)
             else:
-                self.sender.send_header_normal_mail(server_socket, from_address)
-                self.sender.send_normal_mail(server_socket, email_data, content)
+                EmailSender.send_header_normal_mail(server_socket, from_address)
+                EmailSender.send_normal_mail(server_socket, email_data, content)
 
             server_socket.send("QUIT".encode())
     
-    def send_email_bcc(self, From, Bcc, subject, content, attach_files):
+    def send_email_bcc(From, Bcc, subject, content, attach_files):
         check_attach_file = bool(attach_files)
 
         email_data = f"From: {From}\r\nSubject: {subject}\r\nTo: {BCC_NOTICE}\r\n"
@@ -567,46 +554,43 @@ class EmailClient_Send:
             if not response.startswith('220'):
                 raise Exception(f"Error connecting to server: {response}")
             
-            self.sender.send_header(server_socket, From, Bcc)
+            EmailSender.send_header(server_socket, From, Bcc)
 
             if check_attach_file == True:
-                self.sender.send_all_file(server_socket, From, attach_files, email_data, content)
+                EmailSender.send_all_file(server_socket, From, attach_files, email_data, content)
             else:
-                self.sender.send_header_normal_mail(server_socket, From)
-                self.sender.send_normal_mail(server_socket, email_data, content)
+                EmailSender.send_header_normal_mail(server_socket, From)
+                EmailSender.send_normal_mail(server_socket, email_data, content)
             
             server_socket.send("QUIT".encode()) 
 
-    def send_email(self, mails_address_to, mails_address_cc, mails_address_bcc, From, subject, content, attach_files_path):
+    def send_email(mails_address_to, mails_address_cc, mails_address_bcc, From, subject, content, attach_files_path):
         if any(email.strip() for email in mails_address_to):
-            self.send_email_to(From, mails_address_to, subject, content, attach_files_path)
+            EmailClient_Send.send_email_to(From, mails_address_to, subject, content, attach_files_path)
         if any(email.strip() for email in mails_address_cc):
-            self.send_email_cc(From, mails_address_cc, subject, content, attach_files_path)
+            EmailClient_Send.send_email_cc(From, mails_address_cc, subject, content, attach_files_path)
         if any(email.strip() for email in mails_address_bcc):
-            self.send_email_bcc(From, mails_address_bcc, subject, content, attach_files_path)
+            EmailClient_Send.send_email_bcc(From, mails_address_bcc, subject, content, attach_files_path)
 
-    def run_send_mail_program(content, content2, content3):
+    @staticmethod
+    def run_send_mail_program(entry_to, entry_cc, entry_bcc, entry_subject, entry_content, entry_filename):
         mails_address_to = []
         mails_address_cc = []
-        mails_address_bcc = []
-        
-        print(content)
-        print(content2)
-        print(content3)
+        mails_address_bcc = [] 
+    
         #From = input("From: ")
         From = "nguyencongtuan0810@gmail.com"
 
-        
-        # self.info.get_email_to(mails_address_to)
-        # self.info.get_email_cc(mails_address_cc)
-        # self.info.get_email_bcc(mails_address_bcc)
+        EmailSendInfo.get_email_to(mails_address_to, entry_to)
+        EmailSendInfo.get_email_cc(mails_address_cc, entry_cc)
+        EmailSendInfo.get_email_bcc(mails_address_bcc, entry_bcc)
     
-        # subject = input("Subject: ")
-        # content = input("Content: ")
+        subject = entry_subject
+        content = entry_content
 
-        # attach_files_path = self.info.get_attached_file()
+        attach_files_path = EmailSendInfo.get_attached_file(entry_filename)
 
-        # self.send_email(mails_address_to, mails_address_cc, mails_address_bcc, From, subject, content, attach_files_path)
+        EmailClient_Send.send_email(mails_address_to, mails_address_cc, mails_address_bcc, From, subject, content, attach_files_path)
 
     def run(self):
         EmailInterface.menu()

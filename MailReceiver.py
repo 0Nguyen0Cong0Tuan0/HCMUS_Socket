@@ -283,10 +283,13 @@ class EmailSelector:
                 return choice
 
 class EmailClient_Download:
-    def run_download_mail_program(self):
+    @staticmethod
+    def download_tab():
         EmailFilter.create_filter_folder()
         EmailDownloader.download_emails_pop3()
 
+    @staticmethod
+    def run_download_mail_program():
         emails_list = EmailShow.show_download_mail()
 
         while True:
