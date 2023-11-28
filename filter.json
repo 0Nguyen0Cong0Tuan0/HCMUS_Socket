@@ -1,0 +1,50 @@
+{
+    "IMPORTANT": [
+        "urgent",
+        "asap",
+        "important",
+        "action required",
+        "critical",
+        "priority",
+        "attention",
+        "dealine",
+        "approval required",
+        "emergency",
+        "important information",
+        "right now"
+    ],
+    "SPAM": [
+        "virus",
+        "hack",
+        "crack",
+        "security alert",
+        "suspicious activity",
+        "unauthorized access",
+        "account compromise",
+        "fraud warning",
+        "phishing attempt",
+        "please confirm your identity",
+        "click here to reset your password",
+        "verify your account",
+        "unusual login activity",
+        "your account will be suspended",
+        "bank account verification",
+        "important security upadate",
+        "win a prize",
+        "win a lottery"
+    ],
+    "WORK": [
+        "meeting",
+        "report",
+        "project update",
+        "task",
+        "collaboration",
+        "discussion",
+        "schedule",
+        "feedback",
+        "assignment"
+    ],
+    "PROJECT": [
+        "nctuan081004@gmail.com"
+    ]
+}

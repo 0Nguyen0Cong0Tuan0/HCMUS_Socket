@@ -1,5 +1,11 @@
 from MailLib import *
-from MailReceiver import *
+
+def load_config(file_path):
+    with open(file_path, 'r') as file:
+        config_data = json.load(file)
+    return config_data
+
+config = load_config('account.json')
 
 class EmailSendInfo:
     @staticmethod
@@ -105,7 +111,7 @@ class EmailSendInfo:
 
     @staticmethod
     def encode_user_name():
-        encoded_name = base64.b64encode(USERNAME.encode()).decode()
+        encoded_name = base64.b64encode(config['NAME'].encode()).decode()
         return f'=?UTF-8?B?{encoded_name}?='
 
 class EmailEncoder:
@@ -167,7 +173,7 @@ class EmailEncoder:
 class EmailSender:
     @staticmethod
     def send_header(server_socket, From, Type):
-        server_socket.send(f"EHLO {SERVER}\r\n".encode())
+        server_socket.send(f"EHLO {config['SERVER']}\r\n".encode())
         response = server_socket.recv(HEADER).decode()
         if not response.startswith('250'):
             raise Exception(f"Error sending EHLO: {response}")
@@ -277,231 +283,7 @@ class EmailSender:
         response = server_socket.recv(HEADER).decode()
         if not response.startswith('250'):
                 raise Exception(f"Error sending email: {response}")
-
-class EmailInterface:
-    filename_list = [] 
-    @staticmethod
-    def open(send_file):
-        send_file.filename = filedialog.askopenfilename(
-            initialdir="/Socket", title="Select A File", filetypes=(("*", "*"), ("all files", "*.*"))
-        )
-        EmailInterface.filename_list.append(send_file.filename + '  ')
-        EmailInterface.update_label_to(send_file)
-
-    @staticmethod
-    def update_label_to(send_file):
-        filenames = ''.join(EmailInterface.filename_list)
-        
-        max_display_length = 115
-        filenames_with_newlines = '\n'.join([filenames[i:i + max_display_length] for i in range(0, len(filenames), max_display_length)])
-
-        if send_file is send_to_tab:
-            my_label_to.config(text=filenames_with_newlines)
-        elif send_file is send_cc_tab:
-            my_label_cc.config(text=filenames_with_newlines)
-        elif send_file is send_bcc_tab:
-            my_label_bcc.config(text=filenames_with_newlines)
-
-    @staticmethod
-    def to_tab(send_to_tab):
-        # TO LABEL
-        label_to = tb.Label(send_to_tab, text="TO", bootstyle='light',
-                            font=(f'{font_interface}', 10))
-        label_to.grid(row=0, column=0, padx=30, pady=10, sticky="w")
-
-        label_subject = tb.Label(send_to_tab, text="SUBJECT", bootstyle='light',
-                            font=(f'{font_interface}', 10))
-        label_subject.grid(row=1, column=0, padx=30, pady=10, sticky="w")
-
-        label_content = tb.Label(send_to_tab, text="CONTENT", bootstyle='light',
-                            font=(f'{font_interface}', 10))
-        label_content.grid(row=2, column=0, padx=30, pady=10, sticky="w")
-
-        label_file = tb.Label(send_to_tab, text="ATTACHED\n    FILE", bootstyle='light',
-                            font=(f'{font_interface}', 10))
-        label_file.grid(row=3, column=0, padx=30, pady=10, sticky="w")
-
-        # TO ENTRY
-        entry_to = tb.Entry(send_to_tab, font=(f'{font_type}', 10), width=100)
-        entry_to.grid(row=0, column=1, padx=10, pady=10, sticky="w")
-
-        entry_subject = tb.Entry(send_to_tab, font=(f'{font_type}', 10), width=100)
-        entry_subject.grid(row=1, column=1, padx=10, pady=10, sticky="w")
-
-        entry_content = ScrolledText(send_to_tab, height=20, width=116, autohide=True, bootstyle='info round')
-        entry_content.grid(row=2, column=1, padx=10, pady=10, sticky="w")
-        
-        get_file_button = tb.Button(send_to_tab, bootstyle="light, outline, inverse", 
-                        text='Select A File', padding=10, command=lambda: EmailInterface.open(send_to_tab))
-        get_file_button.grid(row=3, column=1, padx=10, pady=10, sticky="w")
-
-        global my_label_to
-        my_label_to = tb.Label(send_to_tab, text="", bootstyle='light', font=('Helvetica', 10))
-        my_label_to.grid(row=4, column=1, padx=10, pady=10, sticky="w")
-
-        submit_mail = tb.Button(send_to_tab, bootstyle="info outline", 
-                        text='SUBMIT', padding=10, command=lambda: EmailClient_Send.run_send_mail_program(entry_to.get(),
-                         None, None, entry_subject.get(), entry_content.get("1.0", "end-1c"), EmailInterface.filename_list))
-        submit_mail.grid(row=4, column=2, padx=10, pady=10, sticky="w")
-
-    @staticmethod
-    def cc_tab(send_cc_tab):
-        # CC LABEL
-        label_cc = tb.Label(send_cc_tab, text="CC", bootstyle='light',
-                            font=(f'{font_interface}', 10))
-        label_cc.grid(row=0, column=0, padx=30, pady=10, sticky="w")
-
-        label_subject_cc = tb.Label(send_cc_tab, text="SUBJECT", bootstyle='light',
-                            font=(f'{font_interface}', 10))
-        label_subject_cc.grid(row=1, column=0, padx=30, pady=10, sticky="w")
-
-        label_content_cc = tb.Label(send_cc_tab, text="CONTENT", bootstyle='light',
-                            font=(f'{font_interface}', 10))
-        label_content_cc.grid(row=2, column=0, padx=30, pady=10, sticky="w")
-
-        label_file_cc = tb.Label(send_cc_tab, text="ATTACHED\n    FILE", bootstyle='light',
-                            font=(f'{font_interface}', 10))
-        label_file_cc.grid(row=3, column=0, padx=30, pady=10, sticky="w")
-
-        # CC ENTRY
-        entry_cc = tb.Entry(send_cc_tab, font=(f'{font_type}', 10), width=100)
-        entry_cc.grid(row=0, column=1, padx=10, pady=10, sticky="w")
-
-        entry_subject_cc = tb.Entry(send_cc_tab, font=(f'{font_type}', 10), width=100)
-        entry_subject_cc.grid(row=1, column=1, padx=10, pady=10, sticky="w")
-
-        entry_content_cc = ScrolledText(send_cc_tab, height=20, width=116, autohide=True, bootstyle='info round')
-        entry_content_cc.grid(row=2, column=1, padx=10, pady=10, sticky="w")
-        
-        get_file_button_cc = tb.Button(send_cc_tab, bootstyle="light, outline, inverse", 
-                        text='Select A File', padding=10, command=lambda: EmailInterface.open(send_cc_tab))
-        get_file_button_cc.grid(row=3, column=1, padx=10, pady=10, sticky="w")
-
-        global my_label_cc
-        my_label_cc = tb.Label(send_cc_tab, text="", bootstyle='light', font=('Helvetica', 10))
-        my_label_cc.grid(row=4, column=1, padx=10, pady=10, sticky="w")
-
-        submit_mail = tb.Button(send_cc_tab, bootstyle="info outline", 
-                        text='SUBMIT', padding=10, command=lambda: EmailClient_Send.run_send_mail_program(None, entry_cc.get(),
-                         None, entry_subject_cc.get(), entry_content_cc.get("1.0", "end-1c"), EmailInterface.filename_list))
-        submit_mail.grid(row=4, column=2, padx=10, pady=10, sticky="w")
-
-    @staticmethod
-    def bcc_tab(send_bcc_tab):
-        # BCC LABEL
-        label_bcc = tb.Label(send_bcc_tab, text="BCC", bootstyle='light',
-                            font=(f'{font_interface}', 10))
-        label_bcc.grid(row=0, column=0, padx=30, pady=10, sticky="w")
-
-        label_subject_bcc = tb.Label(send_bcc_tab, text="SUBJECT", bootstyle='light',
-                            font=(f'{font_interface}', 10))
-        label_subject_bcc.grid(row=1, column=0, padx=30, pady=10, sticky="w")
-
-        label_content_bcc = tb.Label(send_bcc_tab, text="CONTENT", bootstyle='light',
-                            font=(f'{font_interface}', 10))
-        label_content_bcc.grid(row=2, column=0, padx=30, pady=10, sticky="w")
-
-        label_file_bcc = tb.Label(send_bcc_tab, text="ATTACHED\n    FILE", bootstyle='light',
-                            font=(f'{font_interface}', 10))
-        label_file_bcc.grid(row=3, column=0, padx=30, pady=10, sticky="w")
-
-        # BCC ENTRY
-        entry_bcc = tb.Entry(send_bcc_tab, font=(f'{font_type}', 10), width=100)
-        entry_bcc.grid(row=0, column=1, padx=10, pady=10, sticky="w")
-
-        entry_subject_bcc = tb.Entry(send_bcc_tab, font=(f'{font_type}', 10), width=100)
-        entry_subject_bcc.grid(row=1, column=1, padx=10, pady=10, sticky="w")
-
-        entry_content_bcc = ScrolledText(send_bcc_tab, height=20, width=116, autohide=True, bootstyle='info round')
-        entry_content_bcc.grid(row=2, column=1, padx=10, pady=10, sticky="w")
-        
-        get_file_button_bcc = tb.Button(send_bcc_tab, bootstyle="light, outline, inverse", 
-                        text='Select A File', padding=10, command=lambda: EmailInterface.open(send_bcc_tab))
-        get_file_button_bcc.grid(row=3, column=1, padx=10, pady=10, sticky="w")
-
-        global my_label_bcc
-        my_label_bcc = tb.Label(send_bcc_tab, text="", bootstyle='light', font=('Helvetica', 10))
-        my_label_bcc.grid(row=4, column=1, padx=10, pady=10, sticky="w")
-        
-        submit_mail = tb.Button(send_bcc_tab, bootstyle="info outline", 
-                        text='SUBMIT', padding=10, command=lambda: EmailClient_Send.run_send_mail_program(None,
-                         None, entry_bcc.get(), entry_subject_bcc.get(), entry_content_bcc.get("1.0", "end-1c"), EmailInterface.filename_list))
-        submit_mail.grid(row=4, column=2, padx=10, pady=10, sticky="w")
-
-    @staticmethod
-    def open_send_email_window(parent):
-        send_email_window = Toplevel(parent)
-        send_email_window.title("Send Email")
-        send_email_window.geometry(window_size)
-        
-        frame_send = tb.Frame(send_email_window, bootstyle=f'{color}', width=900, height=500)
-        frame_send.grid(padx=100)
-
-        label_sent_program = tb.Label(frame_send, text="SEND", bootstyle=f'inverse {color}',
-                                    font=(f'{font_interface}', 25, 'bold'))
-        label_sent_program.grid(row=0, column=0, columnspan=3, pady=10, padx=10)
-
-        my_notebook = tb.Notebook(frame_send, bootstyle='success')
-        my_notebook.grid(row=1, column=0, padx=5, pady=5, sticky="nsew", rowspan=3)
-        
-        global send_to_tab
-        global send_cc_tab
-        global send_bcc_tab
-        send_to_tab = tb.Frame(my_notebook)
-        send_cc_tab = tb.Frame(my_notebook)
-        send_bcc_tab = tb.Frame(my_notebook)
-
-        my_notebook.add(send_to_tab, text="TO")
-        my_notebook.add(send_cc_tab, text="CC")
-        my_notebook.add(send_bcc_tab, text="BCC")
-
-        EmailInterface.to_tab(send_to_tab)
-        EmailInterface.cc_tab(send_cc_tab)
-        EmailInterface.bcc_tab(send_bcc_tab)
-
-        # Configure column weights to make them expand evenly
-        send_to_tab.columnconfigure(0, weight=1)
-        send_to_tab.columnconfigure(1, weight=1)
-
     
-    @staticmethod
-    def we():
-        pass
-    
-    @staticmethod
-    def menu():
-        root = tb.Window(themename="darkly")
-        root.title("MAIL APPLICATION")
-        root.geometry(window_size)
-
-        # Create Frame
-        frame_menu = tb.Frame(root, bootstyle=f'{color}', width=900, height=500)
-        frame_menu.pack(pady=100, padx=50)
-
-        # Create Label
-        label_menu = tb.Label(frame_menu, text="MENU", bootstyle=f'inverse {color}',
-                            font=(f'{font_interface}', 25, 'bold'))
-        label_menu.grid(row=0, column=1, columnspan=3, pady=10, padx=100)
-
-        # Create Send Email Button
-        get_send = tb.Button(frame_menu, bootstyle="light, outline, inverse", 
-                            text='SEND EMAIL', padding=10, command=lambda: EmailInterface.open_send_email_window(root))
-        get_send.grid(row=1, columnspan=4, pady=10, padx=100)
-
-        get_all_download = tb.Button(frame_menu, bootstyle="light, outline, inverse", 
-                            text='ALL RECEIVED MAIL', padding=10)
-        get_all_download.grid(row=2, columnspan=4, pady=10, padx=100)
-
-        get_download = tb.Button(frame_menu, bootstyle="light, outline, inverse", 
-                            text='DOWNLOAD MAIL', padding=10, command=EmailClient_Download.download_tab)
-        get_download.grid(row=3, columnspan=4, pady=10, padx=100)
-
-        get_exit = tb.Button(frame_menu, bootstyle="light, outline, inverse", 
-                            text='EXIT', padding=10, command=root.destroy)
-        get_exit.grid(row=4, columnspan=4, pady=10, padx=100)
-
-        mainloop()
-
 class EmailClient_Send:
     def send_email_to(from_address, to_addresses, subject, content, attach_files):
         check_attach_file = bool(attach_files)
@@ -509,7 +291,7 @@ class EmailClient_Send:
         user_name_encode = EmailSendInfo.encode_user_name()
         email_data = f"To: {to_address}\r\nFrom: {user_name_encode} <{from_address}>\r\nSubject: {subject}\r\n"
 
-        with socket.create_connection((SERVER, SMTP_PORT)) as server_socket:
+        with socket.create_connection((config['SERVER'], config['SMTP_PORT'])) as server_socket:
             response = server_socket.recv(HEADER).decode()
             if not response.startswith('220'):
                 raise Exception(f"Error connecting to server: {response}")
@@ -529,7 +311,7 @@ class EmailClient_Send:
         cc_address = ', '.join(cc_addresses)
         email_data = f"Cc: {cc_address}\r\nFrom: {from_address}\r\nSubject: {subject}\r\n"
 
-        with socket.create_connection((SERVER, SMTP_PORT)) as server_socket:
+        with socket.create_connection((config['SERVER'], config['SMTP_PORT'])) as server_socket:
             response = server_socket.recv(HEADER).decode()
             if not response.startswith('220'):
                 raise Exception(f"Error connecting To server: {response}")
@@ -549,7 +331,7 @@ class EmailClient_Send:
 
         email_data = f"From: {From}\r\nSubject: {subject}\r\nTo: {BCC_NOTICE}\r\n"
 
-        with socket.create_connection((SERVER, SMTP_PORT)) as server_socket:
+        with socket.create_connection((config['SERVER'], config['SMTP_PORT'])) as server_socket:
             response = server_socket.recv(HEADER).decode()
             if not response.startswith('220'):
                 raise Exception(f"Error connecting to server: {response}")
@@ -592,5 +374,3 @@ class EmailClient_Send:
 
         EmailClient_Send.send_email(mails_address_to, mails_address_cc, mails_address_bcc, From, subject, content, attach_files_path)
 
-    def run(self):
-        EmailInterface.menu()
