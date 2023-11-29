@@ -27,7 +27,7 @@ class LoginTab:
                     return False
                 else:
                     Messagebox.show_info("Connect Successfully!!", "SMTP Connection")
-                    server_socket.send("QUIT".encode()) 
+                    server_socket.send("QUIT\r\n".encode()) 
                     return True
         except ConnectionRefusedError:
             Messagebox.show_error("No connection could be made because the target machine actively refused it!", "SMTP Connection Error")
@@ -37,13 +37,17 @@ class LoginTab:
     def check_create_connection_to_server_to_pop3(self):
         try:
             with socket.create_connection((self.entry_server.get().strip(), self.entry_POP3_PORT.get().strip())) as server_socket:
+                server_socket.send('CAPA\r\n'.encode())
+                server_socket.send(f'USER {self.entry_email.get().strip()}\r\n'.encode())
+                server_socket.send(f'PASS {self.entry_password.get().strip()}\r\n'.encode())
+                server_socket.send("QUIT\r\n".encode()) 
                 response = server_socket.recv(HEADER).decode()
-                if not response.startswith('+OK Test Mail Server'):
+                if not response.startswith('+OK'):
                     Messagebox.show_error("Error connecting to server", f"Error: {response}")
                     return False
                 else:
                     Messagebox.show_info("Connect Successfully!!", "POP3 Connection")
-                    server_socket.send("QUIT".encode()) 
+                    
                     return True
         except ConnectionRefusedError:
             Messagebox.show_error("No connection could be made because the target machine actively refused it!", "POP3 Connection Error")

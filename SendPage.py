@@ -3,18 +3,17 @@ from MailSender import EmailClient_Send
 
 #---- SEND TAB
 class SendTab:
-    filename_list = [] 
     @staticmethod
     def open(send_file):
         send_file.filename = filedialog.askopenfilename(
-            initialdir="/Socket", title="Select A File", filetypes=(("*", "*"), ("all files", "*.*"))
+            initialdir="D:", title="Select A File", filetypes=(("*", "*"), ("all files", "*.*"))
         )
-        SendTab.filename_list.append(send_file.filename + '  ')
+        filename_list.append(send_file.filename + '  ')
         SendTab.update_label_to(send_file)
 
     @staticmethod
     def update_label_to(send_file):
-        filenames = ''.join(SendTab.filename_list)
+        filenames = ''.join(filename_list)
         
         max_display_length = 115
         filenames_with_newlines = '\n'.join([filenames[i:i + max_display_length] for i in range(0, len(filenames), max_display_length)])
@@ -46,6 +45,7 @@ class SendTab:
         label_file.grid(row=3, column=0, padx=30, pady=10, sticky="w")
 
         # TO ENTRY
+        global entry_to, entry_subject, entry_content
         entry_to = tb.Entry(send_to_tab, font=(f'{font_type}', 10), width=100)
         entry_to.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
@@ -65,7 +65,7 @@ class SendTab:
 
         submit_mail = tb.Button(send_to_tab, bootstyle="info outline", 
                         text='SUBMIT', padding=10, command=lambda: SendTab.submit_and_close_to(send_email_window, entry_to.get(),
-                         entry_subject.get(), entry_content.get("1.0", "end-1c"), SendTab.filename_list))
+                         entry_subject.get(), entry_content.get("1.0", "end-1c")))
         submit_mail.grid(row=4, column=2, padx=10, pady=10, sticky="w")
 
     @staticmethod
@@ -88,6 +88,7 @@ class SendTab:
         label_file_cc.grid(row=3, column=0, padx=30, pady=10, sticky="w")
 
         # CC ENTRY
+        global entry_cc, entry_subject_cc, entry_content_cc
         entry_cc = tb.Entry(send_cc_tab, font=(f'{font_type}', 10), width=100)
         entry_cc.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
@@ -107,7 +108,7 @@ class SendTab:
 
         submit_mail = tb.Button(send_cc_tab, bootstyle="info outline", 
                         text='SUBMIT', padding=10, command=lambda: SendTab.submit_and_close_cc(send_email_window, entry_cc.get(),\
-                         entry_subject_cc.get(), entry_content_cc.get("1.0", "end-1c"), SendTab.filename_list))
+                         entry_subject_cc.get(), entry_content_cc.get("1.0", "end-1c")))
         submit_mail.grid(row=4, column=2, padx=10, pady=10, sticky="w")
 
     @staticmethod
@@ -130,6 +131,7 @@ class SendTab:
         label_file_bcc.grid(row=3, column=0, padx=30, pady=10, sticky="w")
 
         # BCC ENTRY
+        global entry_bcc, entry_subject_bcc, entry_content_bcc
         entry_bcc = tb.Entry(send_bcc_tab, font=(f'{font_type}', 10), width=100)
         entry_bcc.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
@@ -149,21 +151,21 @@ class SendTab:
         
         submit_mail = tb.Button(send_bcc_tab, bootstyle="info outline", 
                         text='SUBMIT', padding=10, command=lambda: SendTab.submit_and_close_bcc(send_email_window, entry_bcc.get(),\
-                                 entry_subject_bcc.get(), entry_content_bcc.get("1.0", "end-1c"), SendTab.filename_list))
+                                 entry_subject_bcc.get(), entry_content_bcc.get("1.0", "end-1c")))
         submit_mail.grid(row=4, column=2, padx=10, pady=10, sticky="w")
 
     @staticmethod
-    def submit_and_close_to(window, to, subject, content, filename_list):
+    def submit_and_close_to(window, to, subject, content):
         EmailClient_Send.run_send_mail_program(to, None, None, subject, content, filename_list)
         window.destroy()
 
     @staticmethod
-    def submit_and_close_cc(window, cc, subject, content, filename_list):
+    def submit_and_close_cc(window, cc, subject, content):
         EmailClient_Send.run_send_mail_program(None, cc, None, subject, content, filename_list)
         window.destroy()
 
     @staticmethod
-    def submit_and_close_bcc(window, bcc, subject, content, filename_list):
+    def submit_and_close_bcc(window, bcc, subject, content):
         EmailClient_Send.run_send_mail_program(None, None, bcc, subject, content, filename_list)
         window.destroy()
 
@@ -172,6 +174,9 @@ class SendTab:
         send_email_window = Toplevel(parent)
         send_email_window.title("Send Email")
         send_email_window.geometry(window_size)
+
+        global filename_list
+        filename_list = []
         
         frame_send = tb.Frame(send_email_window, bootstyle=f'{color}', width=900, height=500)
         frame_send.grid(padx=100)

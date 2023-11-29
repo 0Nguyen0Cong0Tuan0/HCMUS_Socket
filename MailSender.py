@@ -304,7 +304,7 @@ class EmailClient_Send:
                 EmailSender.send_header_normal_mail(server_socket, from_address)
                 EmailSender.send_normal_mail(server_socket, email_data, content)
 
-            server_socket.send("QUIT".encode())
+            server_socket.send("QUIT\r\n".encode())
 
     def send_email_cc(from_address, cc_addresses, subject, content, attach_files):
         check_attach_file = bool(attach_files)
@@ -324,7 +324,7 @@ class EmailClient_Send:
                 EmailSender.send_header_normal_mail(server_socket, from_address)
                 EmailSender.send_normal_mail(server_socket, email_data, content)
 
-            server_socket.send("QUIT".encode())
+            server_socket.send("QUIT\r\n".encode())
     
     def send_email_bcc(From, Bcc, subject, content, attach_files):
         check_attach_file = bool(attach_files)
@@ -344,7 +344,7 @@ class EmailClient_Send:
                 EmailSender.send_header_normal_mail(server_socket, From)
                 EmailSender.send_normal_mail(server_socket, email_data, content)
             
-            server_socket.send("QUIT".encode()) 
+            server_socket.send("QUIT\r\n".encode()) 
 
     def send_email(mails_address_to, mails_address_cc, mails_address_bcc, From, subject, content, attach_files_path):
         if any(email.strip() for email in mails_address_to):
