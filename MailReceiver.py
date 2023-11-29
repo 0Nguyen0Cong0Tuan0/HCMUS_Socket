@@ -136,17 +136,18 @@ class EmailFilter:
         subject = EmailGetter.get_subject_email(response)
         content = EmailGetter.get_email_content(response)
 
+
         for folder, keywords in filter_config.items():
-            if any(word.lower() == sender.lower() for word in keywords):
+            if any(word.lower() == sender.strip().lower() for word in keywords):
                 return folder
-            elif any(word.lower() in subject.lower() for word in keywords):
+            elif any(word.lower() in subject.strip().lower() for word in keywords):
                 return folder
-            elif any(word.lower() in content.lower() for word in keywords):
+            elif any(word.lower() in content.strip().lower() for word in keywords):
                 return folder
-            elif any(word.lower() in subject.lower() or word.lower() in content.lower() for word in keywords):
+            elif any(word.lower() in subject.strip().lower() or word.lower() in content.strip().lower() for word in keywords):
                 return folder
-            else:
-                return folder
+        
+        return "INBOX"
 
 class EmailManager:
     @staticmethod
