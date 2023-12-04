@@ -23,9 +23,10 @@ CONTENT_JPG = "image/jpeg; name="
 CONTENT_ZIP = "application/x-zip-compressed; name="
 CONTENT_TRANSFER_ENCODING = "7bit"
 NOTICE = "This is a multi-part message in MIME format."
-SEND_CONTENT = False
 #--------------
 BOUNDARIES = "--------------5sWLTDpPOowcnjH7yr7J87Aq"
 SAVE_FOLDER = 'saved_emails'
 NOTICE_1 = 'Content-Type: multipart/mixed;'
 FOLDER_LIST = ['INBOX', 'PROJECT', 'IMPORTANT', 'WORK', 'SPAM']
+#--------------
+CONFIG_FILE = 'account.json'

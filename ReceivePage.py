@@ -35,7 +35,7 @@ class EmailView:
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
     
     def path_to_sub_folder(self, folder_name):
-        path = os.path.join(SAVE_FOLDER, folder_name)
+        path = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", folder_name)
         return path
 
     def take_email(self, folder_path, file_name):
@@ -50,7 +50,7 @@ class EmailView:
             EmailGetter.get_email_content(response.decode(FORMAT))
     
     def save_attachments(self, response, email_id, folder, new_win):
-        mail_folder = os.path.join(SAVE_FOLDER, folder)
+        mail_folder = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", folder)
         mail_path = os.path.join(mail_folder, f"{email_id} attachment")
         os.makedirs(mail_path, exist_ok=True)
 

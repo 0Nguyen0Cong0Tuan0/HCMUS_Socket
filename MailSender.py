@@ -1,13 +1,9 @@
 from MailLib import *
-
-def load_config(file_path):
-    with open(file_path, 'r') as file:
-        config_data = json.load(file)
-    return config_data
-
-config = load_config('account.json')
+from manageInfo import ManagerInfoUser
 
 class EmailSendInfo:
+    config = ManagerInfoUser.load_config()
+    
     @staticmethod
     def get_email_to(mails_address_to, to_email):
         if to_email is not None:
@@ -111,7 +107,7 @@ class EmailSendInfo:
 
     @staticmethod
     def encode_user_name():
-        encoded_name = base64.b64encode(config['NAME'].encode()).decode()
+        encoded_name = base64.b64encode(EmailSendInfo.config['NAME'].encode()).decode()
         return f'=?UTF-8?B?{encoded_name}?='
 
 class EmailEncoder:
@@ -173,7 +169,7 @@ class EmailEncoder:
 class EmailSender:
     @staticmethod
     def send_header(server_socket, From, Type):
-        server_socket.send(f"EHLO {config['SERVER']}\r\n".encode())
+        server_socket.send(f"EHLO {EmailSendInfo.config['SERVER']}\r\n".encode())
         response = server_socket.recv(HEADER).decode()
         if not response.startswith('250'):
             raise Exception(f"Error sending EHLO: {response}")
@@ -222,13 +218,6 @@ class EmailSender:
                 raise Exception(f"Error sending email: {response}")
 
     @staticmethod
-    def check_send_content(email_data, server_socket, content):
-        global SEND_CONTENT
-        if not SEND_CONTENT:
-            EmailSender.send_content_of_attached_mail(email_data, server_socket, content)
-            SEND_CONTENT = True
-
-    @staticmethod
     def send_content_of_attached_mail(email_data, server_socket, content):
         email_data += f"\r\n{NOTICE}\r\n--{BOUNDARY}\r\nContent-Type: {CONTENT_TYPE}\r\nContent-Transfer-Encoding: {CONTENT_TRANSFER_ENCODING}\r\n\r\n{content}\r\n\r\n"
         server_socket.sendall(f"{email_data}".encode())
@@ -236,27 +225,27 @@ class EmailSender:
 
     @staticmethod
     def send_txt_file(server_socket, email_data, file, content):
-        EmailSender.check_send_content(email_data, server_socket, content)
+        EmailSender.send_content_of_attached_mail(email_data, server_socket, content)
         server_socket.send(f"{EmailEncoder.attach_txt_in_email(file)}".encode())    
     
     @staticmethod
     def send_docx_file(server_socket, email_data, file, content):
-        EmailSender.check_send_content(email_data, server_socket, content)
+        EmailSender.send_content_of_attached_mail(email_data, server_socket, content)
         server_socket.send(f"{EmailEncoder.attach_docx_in_email(file)}".encode())    
 
     @staticmethod
     def send_pdf_file(server_socket, email_data, file, content):
-        EmailSender.check_send_content(email_data, server_socket, content)
+        EmailSender.send_content_of_attached_mail(email_data, server_socket, content)
         server_socket.send(f"{EmailEncoder.attach_pdf_in_email(file)}".encode())    
 
     @staticmethod
     def send_image_file(server_socket, email_data, file, content):
-        EmailSender.check_send_content(email_data, server_socket, content)
+        EmailSender.send_content_of_attached_mail(email_data, server_socket, content)
         server_socket.send(f"{EmailEncoder.attach_image_in_email(file)}".encode())    
 
     @staticmethod
     def send_zip_file(server_socket, email_data, file, content):
-        EmailSender.check_send_content(email_data, server_socket, content)
+        EmailSender.send_content_of_attached_mail(email_data, server_socket, content)
         server_socket.send(f"{EmailEncoder.attach_zip_in_email(file)}".encode())    
 
     @staticmethod
@@ -291,7 +280,7 @@ class EmailClient_Send:
         user_name_encode = EmailSendInfo.encode_user_name()
         email_data = f"To: {to_address}\r\nFrom: {user_name_encode} <{from_address}>\r\nSubject: {subject}\r\n"
 
-        with socket.create_connection((config['SERVER'], config['SMTP_PORT'])) as server_socket:
+        with socket.create_connection((EmailSendInfo.config['SERVER'], EmailSendInfo.config['SMTP_PORT'])) as server_socket:
             response = server_socket.recv(HEADER).decode()
             if not response.startswith('220'):
                 raise Exception(f"Error connecting to server: {response}")
@@ -311,7 +300,7 @@ class EmailClient_Send:
         cc_address = ', '.join(cc_addresses)
         email_data = f"Cc: {cc_address}\r\nFrom: {from_address}\r\nSubject: {subject}\r\n"
 
-        with socket.create_connection((config['SERVER'], config['SMTP_PORT'])) as server_socket:
+        with socket.create_connection((EmailSendInfo.config['SERVER'], EmailSendInfo.config['SMTP_PORT'])) as server_socket:
             response = server_socket.recv(HEADER).decode()
             if not response.startswith('220'):
                 raise Exception(f"Error connecting To server: {response}")
@@ -331,7 +320,7 @@ class EmailClient_Send:
 
         email_data = f"From: {From}\r\nSubject: {subject}\r\nTo: {BCC_NOTICE}\r\n"
 
-        with socket.create_connection((config['SERVER'], config['SMTP_PORT'])) as server_socket:
+        with socket.create_connection((EmailSendInfo.config['SERVER'], EmailSendInfo.config['SMTP_PORT'])) as server_socket:
             response = server_socket.recv(HEADER).decode()
             if not response.startswith('220'):
                 raise Exception(f"Error connecting to server: {response}")
@@ -373,4 +362,3 @@ class EmailClient_Send:
         attach_files_path = EmailSendInfo.get_attached_file(entry_filename)
 
         EmailClient_Send.send_email(mails_address_to, mails_address_cc, mails_address_bcc, From, subject, content, attach_files_path)
-

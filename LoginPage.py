@@ -1,8 +1,6 @@
-from MailLib import json
+from MailLib import json, CONFIG_FILE
 from InterfaceLib import *
 from Menu import MenuTab
-
-CONFIG_FILE = 'account.json'
 
 #----- LOGIN TAB
 class LoginTab:
@@ -17,6 +15,7 @@ class LoginTab:
         self.entry_server = None
         self.entry_SMTP_PORT = None
         self.entry_POP3_PORT = None
+        self.auto_load = "10" 
 
     def check_create_connection_to_server_to_smtp(self):
         try:
@@ -64,8 +63,7 @@ class LoginTab:
 
         if self.check_create_connection_to_server_to_smtp() and self.check_create_connection_to_server_to_pop3():
             self.save_config()
-            
-            MenuTab.menu(self.root)
+            menu_tab = MenuTab(self.root)
 
     def save_config(self):
         config = {
@@ -74,7 +72,8 @@ class LoginTab:
             "PASSWORD": self.entry_password.get().strip(),
             "SERVER": self.entry_server.get().strip(),
             "SMTP_PORT": self.entry_SMTP_PORT.get().strip(),
-            "POP3_PORT": self.entry_POP3_PORT.get().strip()
+            "POP3_PORT": self.entry_POP3_PORT.get().strip(),
+            "AUTOLOAD": self.auto_load
         }
         with open(CONFIG_FILE, "w") as file:
             json.dump(config, file)

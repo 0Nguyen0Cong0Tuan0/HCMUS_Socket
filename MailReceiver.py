@@ -1,13 +1,10 @@
 from MailLib import *
-
-def load_config(file_path):
-    with open(file_path, 'r') as file:
-        config_data = json.load(file)
-    return config_data
-
-config = load_config('account.json')
+from InterfaceLib import Messagebox
+from manageInfo import ManagerInfoUser
 
 class EmailGetter:
+    config = ManagerInfoUser.load_config()
+    
     @staticmethod
     def get_email_ids(response):
         lines = response.splitlines()[1:-1] 
@@ -65,7 +62,7 @@ class EmailDownloader:
         sender = EmailGetter.get_sender(response)
         filtered_email = EmailFilter.filter_email(response)
 
-        email_folder = os.path.join(SAVE_FOLDER, filtered_email)
+        email_folder = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", filtered_email)
         email_path = os.path.join(email_folder, f"{sender}, {email_id}")
         with open(email_path, 'wb') as email_file:
             email_file.write(response.encode())
@@ -73,7 +70,7 @@ class EmailDownloader:
     
     @staticmethod
     def download_emails_pop3():
-        with socket.create_connection((config['SERVER'], config['POP3_PORT'])) as server_socket:
+        with socket.create_connection((EmailGetter.config['SERVER'], EmailGetter.config['POP3_PORT'])) as server_socket:
             response = server_socket.recv(HEADER).decode()
             if not response.startswith('+OK Test Mail Server'):
                 raise Exception(f"Error connecting to server: {response}")
@@ -83,12 +80,12 @@ class EmailDownloader:
             if not response.startswith('+OK\r\nUIDL'):
                 raise Exception(f"Error: {response}")
             
-            server_socket.send(f"USER {config['EMAIL']}\r\n".encode())
+            server_socket.send(f"USER {EmailGetter.config['EMAIL']}\r\n".encode())
             response = server_socket.recv(HEADER).decode()
             if not response.startswith('+OK'):
                 raise Exception(f"Error: {response}")
 
-            server_socket.send(f"PASS {config['PASSWORD']}\r\n".encode())
+            server_socket.send(f"PASS {EmailGetter.config['PASSWORD']}\r\n".encode())
             response = server_socket.recv(HEADER).decode()
             if not response.startswith('+OK'):
                 raise Exception(f"Error: {response}")
@@ -120,11 +117,11 @@ class EmailFilter:
         
     @staticmethod
     def create_filter_folder():
-        if not os.path.exists(SAVE_FOLDER):
-            os.makedirs(SAVE_FOLDER)
+        if not os.path.exists(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}"):
+            os.makedirs(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}")
 
         for folder in FOLDER_LIST:
-            file_path = os.path.join(SAVE_FOLDER, folder)
+            file_path = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", folder)
             if not os.path.exists(file_path):
                 os.makedirs(file_path)
 
@@ -154,7 +151,7 @@ class EmailManager:
     def create_mails_status(sender, email_id, filtered_email):
         element = [filtered_email, sender, email_id, "unread"]
 
-        file_path = os.path.join(SAVE_FOLDER, 'students.csv')
+        file_path = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", 'list_emails.csv')
 
         if os.path.exists(file_path):
             with open(file_path, "r") as read_file:
@@ -173,7 +170,7 @@ class EmailManager:
 
     @staticmethod
     def update_all_mail(email_list):
-        csv_path = os.path.join(SAVE_FOLDER, "students.csv")
+        csv_path = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", "list_emails.csv")
         if os.path.exists(csv_path):
             with open(csv_path, 'w', newline='') as file:
                 writer = csv.writer(file)
@@ -193,7 +190,7 @@ class EmailShow:
     @staticmethod
     def show_download_mail():
         email_list = []
-        csv_path = os.path.join(SAVE_FOLDER, "students.csv")
+        csv_path = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", "list_emails.csv")
 
         if os.path.exists(csv_path):
             with open(csv_path) as file:
@@ -203,4 +200,3 @@ class EmailShow:
                     email_list.append(email)
 
         return email_list
-

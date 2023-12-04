@@ -12,7 +12,7 @@ import socket
 HEADER = 1024
 
 window_width = 1200
-window_height = 700
+window_height = 800
 window_size = str(window_width) + 'x' + str(window_height)
 color = "primary"
 font_interface = 'GOUDY STOUT'
