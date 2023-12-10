@@ -1,4 +1,4 @@
-from MailLib import json, CONFIG_FILE
+from MailLib import os, json, CONFIG_FILE
 
 class ManagerInfoUser:
     @staticmethod
@@ -11,17 +11,11 @@ class ManagerInfoUser:
             return None
     
     @staticmethod
-    def reset_config():
+    def delete_config_file():
         try:
-            with open(CONFIG_FILE, 'r') as file:
-                config_data = json.load(file)
-            
-            erased_data = {key: "" for key in config_data}
-
-            with open(CONFIG_FILE, 'w') as file:
-                json.dump(erased_data, file)
+            os.remove(CONFIG_FILE)
         except FileNotFoundError:
-            print(f"File '{CONFIG_FILE}' not found.")
+            return
 
             
     

@@ -1,6 +1,7 @@
 from InterfaceLib import *
 from MailLib import *
 from MailReceiver import EmailShow, EmailGetter, EmailManager, EmailDownloader, EmailFilter
+from manageInfo import ManagerInfoUser
 
 #---- RECEIVE TAB AND DOWNLOAD TAB
 class EmailView:
@@ -10,7 +11,6 @@ class EmailView:
         self.root.geometry(window_size)
 
         self.style = Style(theme='darkly')
-
 
         self.tree = ttk.Treeview(self.root, style="Treeview", 
                                 columns=("Sender", "Message ID", "Status"))
@@ -35,7 +35,8 @@ class EmailView:
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
     
     def path_to_sub_folder(self, folder_name):
-        path = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", folder_name)
+        config = ManagerInfoUser.load_config()
+        path = os.path.join(f"{SAVE_FOLDER}_{config['EMAIL']}", folder_name)
         return path
 
     def take_email(self, folder_path, file_name):
@@ -50,7 +51,8 @@ class EmailView:
             EmailGetter.get_email_content(response.decode(FORMAT))
     
     def save_attachments(self, response, email_id, folder, new_win):
-        mail_folder = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", folder)
+        config = ManagerInfoUser.load_config()
+        mail_folder = os.path.join(f"{SAVE_FOLDER}_{config['EMAIL']}", folder)
         mail_path = os.path.join(mail_folder, f"{email_id} attachment")
         os.makedirs(mail_path, exist_ok=True)
 
@@ -69,7 +71,6 @@ class EmailView:
                 encoded_data = base64.b64decode(attachment_data)
                 attachment_file.write(encoded_data)
         
-        Messagebox.ok("SAVE SUCCESSFULLY", "NOTIFICATION")
         new_win.destroy()
 
     def show_mail(self, response, sender, subject, content, email_id, folder):

@@ -1,9 +1,8 @@
 from MailLib import *
 from manageInfo import ManagerInfoUser
+from InterfaceLib import Messagebox
 
 class EmailSendInfo:
-    config = ManagerInfoUser.load_config()
-    
     @staticmethod
     def get_email_to(mails_address_to, to_email):
         if to_email is not None:
@@ -30,72 +29,7 @@ class EmailSendInfo:
         if entry_filename == ['']:
             return []
         else:
-            new_path = EmailSendInfo.get_valid_file(entry_filename)
-            return new_path
-    
-    @staticmethod
-    def get_valid_file(attach_files):  
-        count = 0    
-        new_attach_files = []
-
-        for file_path in attach_files:
-            file_path = file_path.strip()
-
-            if os.path.exists(file_path):
-                file_size = os.path.getsize(file_path) / (1024**2)
-                if file_size <= 3:
-                    new_attach_files.append(file_path)
-                else:
-                    print(f"The size of the attached file {file_path} is too large")
-                    print("Do you want to remove or choose another file? (0: remove, 1: choose): ", end="")
-
-                    while True:
-                        choice = int(input())
-
-                        if choice == 0:
-                            remove_file = attach_files[count]
-                            attach_files = [file for file in attach_files if file is not remove_file]
-                            break
-                        elif choice == 1:
-                            while True:
-                                add_file = input("File you want to attach: ")
-                                if os.path.exists(add_file):
-                                    file_size = os.path.getsize(add_file) / (1024**2)
-                                    if file_size <= 3:
-                                        new_attach_files.append(add_file)
-                                        break
-                                    else:
-                                        print(f"The size of the attached file {file_path} is too large")
-                                else:
-                                    print(f"{add_file} does not exist.")
-                        else:
-                            print("Invalid choice!!! Try again")
-            else:
-                print(f"{file_path} does not exist.")
-                print(f"Do you want to change the file {file_path}? (0: no, 1: yes): ", end="")
-
-                while True:
-                    choice_change = int(input())
-                    if choice_change == 0:
-                        break
-                    elif choice_change == 1:
-                        while True:
-                            add_file = input("File you want to attach: ")
-                            if os.path.exists(add_file):
-                                file_size = os.path.getsize(add_file) / (1024**2)
-                                if file_size <= 3:
-                                    new_attach_files.append(add_file)
-                                    break
-                                else:
-                                    print(f"The size of the attached file {file_path} is too large")
-                            else:
-                                print(f"{add_file} does not exist.")
-                        break
-                
-
-            count += 1
-
-        return new_attach_files
+            return entry_filename
     
     @staticmethod
     def generate_message_id():
@@ -107,7 +41,8 @@ class EmailSendInfo:
 
     @staticmethod
     def encode_user_name():
-        encoded_name = base64.b64encode(EmailSendInfo.config['NAME'].encode()).decode()
+        config = ManagerInfoUser.load_config()
+        encoded_name = base64.b64encode(config['NAME'].encode()).decode()
         return f'=?UTF-8?B?{encoded_name}?='
 
 class EmailEncoder:
@@ -131,7 +66,6 @@ class EmailEncoder:
         if os.path.exists(file_path):
             return EmailEncoder.encode_and_header_attach_file(file_path, CONTENT_TXT)
         else:
-            print("The file does not exist")
             return ""
     
     @staticmethod
@@ -139,7 +73,6 @@ class EmailEncoder:
         if os.path.exists(file_path):
             return EmailEncoder.encode_and_header_attach_file(file_path, CONTENT_DOCX)
         else:
-            print("The file does not exist")
             return ""
 
     @staticmethod
@@ -147,7 +80,6 @@ class EmailEncoder:
         if os.path.exists(file_path):
             return EmailEncoder.encode_and_header_attach_file(file_path, CONTENT_PDF)
         else:
-            print("The file does not exist")
             return ""
     
     @staticmethod
@@ -155,7 +87,6 @@ class EmailEncoder:
         if os.path.exists(file_path):
             return EmailEncoder.encode_and_header_attach_file(file_path, CONTENT_JPG)
         else:
-            print("The file does not exist")
             return ""
 
     @staticmethod
@@ -163,13 +94,13 @@ class EmailEncoder:
         if os.path.exists(file_path):
             return EmailEncoder.encode_and_header_attach_file(file_path, CONTENT_ZIP)
         else:
-            print("The file does not exist")
             return ""
         
 class EmailSender:
     @staticmethod
-    def send_header(server_socket, From, Type):
-        server_socket.send(f"EHLO {EmailSendInfo.config['SERVER']}\r\n".encode())
+    def send_header(server_socket, From, Type_to, Type_cc, Type_bcc):
+        config = ManagerInfoUser.load_config()
+        server_socket.send(f"EHLO [{config['SERVER']}]\r\n".encode())
         response = server_socket.recv(HEADER).decode()
         if not response.startswith('250'):
             raise Exception(f"Error sending EHLO: {response}")
@@ -179,11 +110,26 @@ class EmailSender:
         if not response.startswith('250'):
             raise Exception(f"Error sending mail address: {response}")
 
-        for to_address in Type:  # Iterate over the list of addresses
-            server_socket.send(f"RCPT TO:<{to_address}>\r\n".encode())
-            response = server_socket.recv(HEADER).decode()
-            if not response.startswith('250'):
-                raise Exception(f"Error sending mail address: {response}")
+        if any(email.strip() for email in Type_to):
+            for to_address in Type_to: 
+                server_socket.send(f"RCPT TO:<{to_address}>\r\n".encode())
+                response = server_socket.recv(HEADER).decode()
+                if not response.startswith('250'):
+                    raise Exception(f"Error sending mail address: {response}")
+                
+        if any(email.strip() for email in Type_cc):
+            for cc_address in Type_cc: 
+                server_socket.send(f"RCPT TO:<{cc_address}>\r\n".encode())
+                response = server_socket.recv(HEADER).decode()
+                if not response.startswith('250'):
+                    raise Exception(f"Error sending mail address: {response}")
+        
+        if any(email.strip() for email in Type_bcc):
+            for bcc_address in Type_bcc: 
+                server_socket.send(f"RCPT TO:<{bcc_address}>\r\n".encode())
+                response = server_socket.recv(HEADER).decode()
+                if not response.startswith('250'):
+                    raise Exception(f"Error sending mail address: {response}")
 
         server_socket.send("DATA\r\n".encode())
         response = server_socket.recv(HEADER).decode()
@@ -196,7 +142,7 @@ class EmailSender:
         server_socket.send(f"Message-ID: {message_id}\r\n".encode())
 
         current_time = datetime.now()
-        time_format = current_time.strftime("Date: %a, %d %b %Y %H:%M:%S +0700")
+        time_format = current_time.strftime("Date: %a,%e %b %Y %H:%M:%S +0700")
         server_socket.send(f"{time_format}\r\n".encode())
 
         server_socket.send(f"MIME-Version: {MIME_VERSION}\r\n".encode())
@@ -252,15 +198,15 @@ class EmailSender:
     def send_all_file(server_socket, From, attach_files, email_data, content):
         EmailSender.send_header_attached_file_mail(server_socket, From)
         for index, file in enumerate(attach_files):
-            if file.endswith('.txt'):
+            if file.strip().endswith('.txt'):
                 EmailSender.send_txt_file(server_socket, email_data, file, content)
-            if file.endswith('.docx'):
+            if file.strip().endswith('.docx'):
                 EmailSender.send_docx_file(server_socket, email_data, file, content)
-            elif file.endswith('.pdf'):
+            elif file.strip().endswith('.pdf'):
                 EmailSender.send_pdf_file(server_socket, email_data, file, content)
-            elif file.endswith('.jpg'):
+            elif file.strip().endswith('.jpg'):
                 EmailSender.send_image_file(server_socket, email_data, file, content)
-            elif file.endswith('.zip'):
+            elif file.strip().endswith('.zip'):
                 EmailSender.send_zip_file(server_socket, email_data, file, content)
             
             if index == len(attach_files) - 1:
@@ -273,59 +219,20 @@ class EmailSender:
         if not response.startswith('250'):
                 raise Exception(f"Error sending email: {response}")
     
-class EmailClient_Send:
-    def send_email_to(from_address, to_addresses, subject, content, attach_files):
-        check_attach_file = bool(attach_files)
-        to_address = ', '.join(to_addresses)
-        user_name_encode = EmailSendInfo.encode_user_name()
-        email_data = f"To: {to_address}\r\nFrom: {user_name_encode} <{from_address}>\r\nSubject: {subject}\r\n"
-
-        with socket.create_connection((EmailSendInfo.config['SERVER'], EmailSendInfo.config['SMTP_PORT'])) as server_socket:
-            response = server_socket.recv(HEADER).decode()
-            if not response.startswith('220'):
-                raise Exception(f"Error connecting to server: {response}")
-
-            EmailSender.send_header(server_socket, from_address, to_addresses)
-
-            if check_attach_file == True:
-                EmailSender.send_all_file(server_socket, from_address, attach_files, email_data, content)
-            else:
-                EmailSender.send_header_normal_mail(server_socket, from_address)
-                EmailSender.send_normal_mail(server_socket, email_data, content)
-
-            server_socket.send("QUIT\r\n".encode())
-
-    def send_email_cc(from_address, cc_addresses, subject, content, attach_files):
-        check_attach_file = bool(attach_files)
-        cc_address = ', '.join(cc_addresses)
-        email_data = f"Cc: {cc_address}\r\nFrom: {from_address}\r\nSubject: {subject}\r\n"
-
-        with socket.create_connection((EmailSendInfo.config['SERVER'], EmailSendInfo.config['SMTP_PORT'])) as server_socket:
-            response = server_socket.recv(HEADER).decode()
-            if not response.startswith('220'):
-                raise Exception(f"Error connecting To server: {response}")
-
-            EmailSender.send_header(server_socket, from_address, cc_addresses)
-
-            if check_attach_file == True:
-                EmailSender.send_all_file(server_socket, from_address, attach_files, email_data, content)
-            else:
-                EmailSender.send_header_normal_mail(server_socket, from_address)
-                EmailSender.send_normal_mail(server_socket, email_data, content)
-
-            server_socket.send("QUIT\r\n".encode())
-    
+class EmailClient_Send: 
     def send_email_bcc(From, Bcc, subject, content, attach_files):
+        config = ManagerInfoUser.load_config()
         check_attach_file = bool(attach_files)
+        user_name_encode = EmailSendInfo.encode_user_name()
 
-        email_data = f"From: {From}\r\nSubject: {subject}\r\nTo: {BCC_NOTICE}\r\n"
+        email_data = f"From: {user_name_encode} <{From}>\r\nSubject: {subject}\r\nTo: {BCC_NOTICE}\r\n"
 
-        with socket.create_connection((EmailSendInfo.config['SERVER'], EmailSendInfo.config['SMTP_PORT'])) as server_socket:
+        with socket.create_connection((config['SERVER'], config['SMTP_PORT'])) as server_socket:
             response = server_socket.recv(HEADER).decode()
             if not response.startswith('220'):
                 raise Exception(f"Error connecting to server: {response}")
             
-            EmailSender.send_header(server_socket, From, Bcc)
+            EmailSender.send_header(server_socket, From, [], [], Bcc)
 
             if check_attach_file == True:
                 EmailSender.send_all_file(server_socket, From, attach_files, email_data, content)
@@ -333,24 +240,49 @@ class EmailClient_Send:
                 EmailSender.send_header_normal_mail(server_socket, From)
                 EmailSender.send_normal_mail(server_socket, email_data, content)
             
-            server_socket.send("QUIT\r\n".encode()) 
+            server_socket.send("QUIT\r\n".encode())
 
-    def send_email(mails_address_to, mails_address_cc, mails_address_bcc, From, subject, content, attach_files_path):
-        if any(email.strip() for email in mails_address_to):
-            EmailClient_Send.send_email_to(From, mails_address_to, subject, content, attach_files_path)
-        if any(email.strip() for email in mails_address_cc):
-            EmailClient_Send.send_email_cc(From, mails_address_cc, subject, content, attach_files_path)
-        if any(email.strip() for email in mails_address_bcc):
-            EmailClient_Send.send_email_bcc(From, mails_address_bcc, subject, content, attach_files_path)
+    def send_email(from_address, to_addresses, cc_addresses, bcc_addresses, subject, content, attach_files):
+        config = ManagerInfoUser.load_config()
+        check_attach_file = bool(attach_files)
+        email_data = ""
+
+        if any(email.strip() for email in to_addresses):
+            to_address = ', '.join(to_addresses)
+            email_data += f"To: {to_address}\r\n"
+        if any(email.strip() for email in cc_addresses):
+            cc_address = ', '.join(cc_addresses)
+            email_data += f"Cc: {cc_address}\r\n"
+        
+        if not any(email.strip() for email in to_addresses) and not any(email.strip() for email in cc_addresses):
+            EmailClient_Send.send_email_bcc(from_address, bcc_addresses, subject, content, attach_files)
+            return
+
+        user_name_encode = EmailSendInfo.encode_user_name()
+        
+        email_data += f"From: {user_name_encode} <{from_address}>\r\nSubject: {subject}\r\n"
+        with socket.create_connection((config['SERVER'], config['SMTP_PORT'])) as server_socket:
+            response = server_socket.recv(HEADER).decode()
+            if not response.startswith('220'):
+                raise Exception(f"Error connecting to server: {response}")
+
+            EmailSender.send_header(server_socket, from_address, to_addresses, cc_addresses, bcc_addresses)
+            
+            if check_attach_file == True:
+                EmailSender.send_all_file(server_socket, from_address, attach_files, email_data, content)
+            else:
+                EmailSender.send_header_normal_mail(server_socket, from_address)
+                EmailSender.send_normal_mail(server_socket, email_data, content)
+
+            server_socket.send("QUIT\r\n".encode()) 
 
     @staticmethod
     def run_send_mail_program(entry_to, entry_cc, entry_bcc, entry_subject, entry_content, entry_filename):
         mails_address_to = []
         mails_address_cc = []
         mails_address_bcc = [] 
-    
-        #From = input("From: ")
-        From = "nguyencongtuan0810@gmail.com"
+
+        From = ManagerInfoUser.load_config()['EMAIL']
 
         EmailSendInfo.get_email_to(mails_address_to, entry_to)
         EmailSendInfo.get_email_cc(mails_address_cc, entry_cc)
@@ -361,4 +293,4 @@ class EmailClient_Send:
 
         attach_files_path = EmailSendInfo.get_attached_file(entry_filename)
 
-        EmailClient_Send.send_email(mails_address_to, mails_address_cc, mails_address_bcc, From, subject, content, attach_files_path)
+        EmailClient_Send.send_email(From, mails_address_to, mails_address_cc, mails_address_bcc, subject, content, attach_files_path)

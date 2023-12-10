@@ -1,4 +1,4 @@
-from MailLib import json, CONFIG_FILE
+from MailLib import json, socket, CONFIG_FILE
 from InterfaceLib import *
 from Menu import MenuTab
 

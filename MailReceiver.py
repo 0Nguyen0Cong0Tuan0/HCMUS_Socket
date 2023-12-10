@@ -1,10 +1,7 @@
 from MailLib import *
-from InterfaceLib import Messagebox
 from manageInfo import ManagerInfoUser
 
 class EmailGetter:
-    config = ManagerInfoUser.load_config()
-    
     @staticmethod
     def get_email_ids(response):
         lines = response.splitlines()[1:-1] 
@@ -24,7 +21,7 @@ class EmailGetter:
         return sender
     
     @staticmethod
-    def get_subject_email(response):
+    def get_subject_email(response):        
         lines = response.splitlines()[1:]
         for line in lines:
             if line.strip().startswith("Subject: "):
@@ -56,21 +53,25 @@ class EmailDownloader:
         
     @staticmethod
     def download_email_pop3(server_socket, num_id, email_id):
+        config = ManagerInfoUser.load_config()
         server_socket.send(f"RETR {num_id}\r\n".encode())
         response = EmailDownloader.receive_all(server_socket).decode()
 
         sender = EmailGetter.get_sender(response)
         filtered_email = EmailFilter.filter_email(response)
 
-        email_folder = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", filtered_email)
+        email_folder = os.path.join(f"{SAVE_FOLDER}_{config['EMAIL']}", filtered_email)
         email_path = os.path.join(email_folder, f"{sender}, {email_id}")
-        with open(email_path, 'wb') as email_file:
-            email_file.write(response.encode())
-            EmailManager.create_mails_status(sender, email_id, filtered_email)
+        
+        if not os.path.exists(email_path):
+            with open(email_path, 'wb') as email_file:
+                email_file.write(response.encode())
+                EmailManager.create_mails_status(sender, email_id, filtered_email)
     
     @staticmethod
     def download_emails_pop3():
-        with socket.create_connection((EmailGetter.config['SERVER'], EmailGetter.config['POP3_PORT'])) as server_socket:
+        config = ManagerInfoUser.load_config()
+        with socket.create_connection((config['SERVER'], config['POP3_PORT'])) as server_socket:
             response = server_socket.recv(HEADER).decode()
             if not response.startswith('+OK Test Mail Server'):
                 raise Exception(f"Error connecting to server: {response}")
@@ -80,12 +81,12 @@ class EmailDownloader:
             if not response.startswith('+OK\r\nUIDL'):
                 raise Exception(f"Error: {response}")
             
-            server_socket.send(f"USER {EmailGetter.config['EMAIL']}\r\n".encode())
+            server_socket.send(f"USER {config['EMAIL']}\r\n".encode())
             response = server_socket.recv(HEADER).decode()
             if not response.startswith('+OK'):
                 raise Exception(f"Error: {response}")
 
-            server_socket.send(f"PASS {EmailGetter.config['PASSWORD']}\r\n".encode())
+            server_socket.send(f"PASS {config['PASSWORD']}\r\n".encode())
             response = server_socket.recv(HEADER).decode()
             if not response.startswith('+OK'):
                 raise Exception(f"Error: {response}")
@@ -117,11 +118,12 @@ class EmailFilter:
         
     @staticmethod
     def create_filter_folder():
-        if not os.path.exists(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}"):
-            os.makedirs(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}")
+        config = ManagerInfoUser.load_config()
+        if not os.path.exists(f"{SAVE_FOLDER}_{config['EMAIL']}"):
+            os.makedirs(f"{SAVE_FOLDER}_{config['EMAIL']}")
 
         for folder in FOLDER_LIST:
-            file_path = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", folder)
+            file_path = os.path.join(f"{SAVE_FOLDER}_{config['EMAIL']}", folder)
             if not os.path.exists(file_path):
                 os.makedirs(file_path)
 
@@ -135,23 +137,23 @@ class EmailFilter:
 
 
         for folder, keywords in filter_config.items():
-            if any(word.lower() == sender.strip().lower() for word in keywords):
+            if any(word.lower() in subject.strip().lower() or word.lower() in content.strip().lower() for word in keywords):
+                return folder
+            elif any(word.lower() == sender.strip().lower() for word in keywords):
                 return folder
             elif any(word.lower() in subject.strip().lower() for word in keywords):
                 return folder
             elif any(word.lower() in content.strip().lower() for word in keywords):
                 return folder
-            elif any(word.lower() in subject.strip().lower() or word.lower() in content.strip().lower() for word in keywords):
-                return folder
-        
+
         return "INBOX"
 
 class EmailManager:
     @staticmethod
     def create_mails_status(sender, email_id, filtered_email):
+        config = ManagerInfoUser.load_config()
         element = [filtered_email, sender, email_id, "unread"]
-
-        file_path = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", 'list_emails.csv')
+        file_path = os.path.join(f"{SAVE_FOLDER}_{config['EMAIL']}", 'list_emails.csv')
 
         if os.path.exists(file_path):
             with open(file_path, "r") as read_file:
@@ -170,7 +172,8 @@ class EmailManager:
 
     @staticmethod
     def update_all_mail(email_list):
-        csv_path = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", "list_emails.csv")
+        config = ManagerInfoUser.load_config()
+        csv_path = os.path.join(f"{SAVE_FOLDER}_{config['EMAIL']}", "list_emails.csv")
         if os.path.exists(csv_path):
             with open(csv_path, 'w', newline='') as file:
                 writer = csv.writer(file)
@@ -189,8 +192,9 @@ class EmailManager:
 class EmailShow:
     @staticmethod
     def show_download_mail():
+        config = ManagerInfoUser.load_config()
         email_list = []
-        csv_path = os.path.join(f"{SAVE_FOLDER}_{EmailGetter.config['EMAIL']}", "list_emails.csv")
+        csv_path = os.path.join(f"{SAVE_FOLDER}_{config['EMAIL']}", "list_emails.csv")
 
         if os.path.exists(csv_path):
             with open(csv_path) as file:

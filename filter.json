@@ -7,7 +7,7 @@
         "critical",
         "priority",
         "attention",
-        "dealine",
+        "deadline",
         "approval required",
         "emergency",
         "important information",
@@ -29,7 +29,7 @@
         "unusual login activity",
         "your account will be suspended",
         "bank account verification",
-        "important security upadate",
+        "important security update",
         "win a prize",
         "win a lottery"
     ],

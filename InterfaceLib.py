@@ -7,8 +7,6 @@ from ttkbootstrap import Style
 from ttkbootstrap.scrolled import ScrolledText
 from ttkbootstrap.dialogs import Messagebox
 
-import socket
-
 HEADER = 1024
 
 window_width = 1200

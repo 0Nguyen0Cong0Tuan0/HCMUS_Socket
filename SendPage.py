@@ -1,5 +1,6 @@
 from InterfaceLib import *
 from MailSender import EmailClient_Send
+from MailLib import os
 
 #---- SEND TAB
 class SendTab:
@@ -13,12 +14,15 @@ class SendTab:
         self.send_tab = None
 
     def open(self):
-        self.send_tab.filename = filedialog.askopenfilename(
+        filename = filedialog.askopenfilename(
             initialdir="D:", title="Select A File", filetypes=(("*", "*"), ("all files", "*.*"))
         )
-        self.filename_list.append(self.send_tab.filename + '  ')
-        self.update_label_to()
-
+        
+        if filename:
+            file_size = os.path.getsize(filename) / (1024**2)
+            if file_size <= 3:
+                self.filename_list.append(filename + '  ')
+                self.update_label_to()
 
     def update_label_to(self):
         filenames = ''.join(self.filename_list)
@@ -26,8 +30,7 @@ class SendTab:
         max_display_length = 115
         filenames_with_newlines = '\n'.join([filenames[i:i + max_display_length] for i in range(0, len(filenames), max_display_length)])
         self.my_label_attached_file.config(text=filenames_with_newlines)
-
-
+        
     def to_tab(self):
         label_to = tb.Label(self.send_tab, text="TO", bootstyle='light',
                             font=(f'{font_interface}', 10))
@@ -69,7 +72,7 @@ class SendTab:
         entry_content.grid(row=4, column=1, padx=10, pady=10, sticky="w")
         
         get_file_button = tb.Button(self.send_tab, bootstyle="light, outline, inverse", 
-                        text='Select A File', padding=10, command=lambda: self.open)
+                        text='Select A File', padding=10, command=lambda: self.open())
         get_file_button.grid(row=5, column=1, padx=10, pady=10, sticky="w")
 
         self.my_label_attached_file = tb.Label(self.send_tab, text="", bootstyle='light', font=('Helvetica', 10))
@@ -105,4 +108,3 @@ class SendTab:
 
         self.send_tab.columnconfigure(0, weight=1)
         self.send_tab.columnconfigure(1, weight=1)
-

@@ -16,8 +16,8 @@ class MenuTab:
 
         self.menu()
 
-        time_counter_thread = threading.Thread(target=self.run_time_counter_to_download)
-        time_counter_thread.start()
+        self.time_counter_thread = threading.Thread(target=self.run_time_counter_to_download)
+        self.time_counter_thread.start()
 
     def menu(self):
         # Create Frame
@@ -49,7 +49,7 @@ class MenuTab:
     def press_exit(self):
         self.stop_thread = True
         self.menu_interface.destroy()
-        ManagerInfoUser.reset_config()
+        ManagerInfoUser.delete_config_file()
 
     def run_time_counter_to_download(self):
         counter = 0
@@ -58,3 +58,6 @@ class MenuTab:
             counter += 1
             if not self.stop_thread and counter % int(self.config['AUTOLOAD']) == 0:
                 EmailView.download_tab()
+            elif self.stop_thread or not self.menu_interface.winfo_exists():
+                ManagerInfoUser.delete_config_file()
+                break
