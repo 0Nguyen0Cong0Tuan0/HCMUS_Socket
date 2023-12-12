@@ -1,6 +1,5 @@
 from MailLib import *
 from manageInfo import ManagerInfoUser
-from InterfaceLib import Messagebox
 
 class EmailSendInfo:
     @staticmethod

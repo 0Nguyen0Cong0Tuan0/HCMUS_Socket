@@ -66,10 +66,11 @@ class EmailView:
             attachment_start = response.find(b'\r\n\r\n', match.end()) + 4
             attachment_end = response.find(b'\r\n\r\n', attachment_start)
             
-            with open(attachment_path, 'wb') as attachment_file:
-                attachment_data = response[attachment_start:attachment_end]
-                encoded_data = base64.b64decode(attachment_data)
-                attachment_file.write(encoded_data)
+            if not os.path.exists(attachment_path):
+                with open(attachment_path, 'wb') as attachment_file:
+                    attachment_data = response[attachment_start:attachment_end]
+                    encoded_data = base64.b64decode(attachment_data)
+                    attachment_file.write(encoded_data)
         
         new_win.destroy()
 
