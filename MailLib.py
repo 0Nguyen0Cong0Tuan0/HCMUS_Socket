@@ -3,11 +3,10 @@ import csv
 import re
 import base64
 import socket
-#--------------
 from datetime import datetime
 import uuid
-#--------------
 import json
+#-----
 HEADER = 1024
 FORMAT = "utf-8"
 BOUNDARY = "------------5sWLTDpPOowcnjH7yr7J87Aq"
@@ -23,10 +22,8 @@ CONTENT_JPG = "image/jpeg; name="
 CONTENT_ZIP = "application/x-zip-compressed; name="
 CONTENT_TRANSFER_ENCODING = "7bit"
 NOTICE = "This is a multi-part message in MIME format."
-#--------------
 BOUNDARIES = "--------------5sWLTDpPOowcnjH7yr7J87Aq"
 SAVE_FOLDER = 'saved_emails'
 NOTICE_1 = 'Content-Type: multipart/mixed;'
 FOLDER_LIST = ['INBOX', 'PROJECT', 'IMPORTANT', 'WORK', 'SPAM']
-#--------------
 CONFIG_FILE = 'account.json'

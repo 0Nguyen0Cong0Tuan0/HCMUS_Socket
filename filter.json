@@ -11,8 +11,7 @@
         "approval required",
         "emergency",
         "important information",
-        "right now"
-    ],
+        "right now"],
     "SPAM": [
         "virus",
         "hack",
@@ -31,8 +30,7 @@
         "bank account verification",
         "important security update",
         "win a prize",
-        "win a lottery"
-    ],
+        "win a lottery"],
     "WORK": [
         "meeting",
         "report",

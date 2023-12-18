@@ -184,7 +184,7 @@ class EmailManager:
     @staticmethod
     def update_status_of_mail(email_id, emails_list):
         matching_emails = [email for email in emails_list if email.get('mes_id') == email_id]
-        
+
         if matching_emails: 
             for matching_email in matching_emails:
                 matching_email['status'] = "read"
