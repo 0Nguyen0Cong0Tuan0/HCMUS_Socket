@@ -2,6 +2,7 @@ from MailLib import *
 from manageInfo import ManagerInfoUser
 
 class EmailGetter:
+    # Lấy email ID của mail
     @staticmethod
     def get_email_ids(response):
         lines = response.splitlines()[1:-1] 
@@ -9,6 +10,7 @@ class EmailGetter:
         email_ids = [line.split()[1] for line in lines]
         return num_ids, email_ids
     
+    # Lấy thông tin người gửi
     @staticmethod
     def get_sender(response):
         lines = response.splitlines()[1:]
@@ -20,6 +22,7 @@ class EmailGetter:
                 break
         return sender
     
+    # Lấy subject của mail
     @staticmethod
     def get_subject_email(response):        
         lines = response.splitlines()[1:]
@@ -29,6 +32,7 @@ class EmailGetter:
                 break
         return subject
 
+    # Lấy nội dung của mail
     @staticmethod
     def get_email_content(response):
         start_marker = "Content-Transfer-Encoding: 7bit"
@@ -44,13 +48,16 @@ class EmailGetter:
             return response[start_index + len(start_marker):end_index_dot].strip()
 
 class EmailDownloader:
+    # Hàm nhận tất cả những gì POP3 trả về (thông tin của mail)
+    # Hàm trả về thông tin dưới dạng byte (b)
     @staticmethod
     def receive_all(socket):
         data = b""
         while not data.endswith(b"\r\n.\r\n"):
             data += socket.recv(HEADER)
         return data
-        
+    
+    # Thực hiện download mail bằng POP3
     @staticmethod
     def download_email_pop3(server_socket, num_id, email_id):
         config = ManagerInfoUser.load_config()
@@ -68,6 +75,7 @@ class EmailDownloader:
                 email_file.write(response.encode())
                 EmailManager.create_mails_status(sender, email_id, filtered_email)
     
+    # Thực hiện download các mail có trong Mailbox bằng POP3
     @staticmethod
     def download_emails_pop3():
         config = ManagerInfoUser.load_config()
@@ -111,11 +119,14 @@ class EmailDownloader:
                 EmailDownloader.download_email_pop3(server_socket, num_id, email_id)
 
 class EmailFilter:
+    # Lấy thông tin có trong file config (filter.json)
     @staticmethod
     def load_filter_config():
         with open('filter.json', 'r') as json_file:
             return json.load(json_file)
-        
+    
+    # Tạo ra các folder để chứa các mail được download về
+    # Mail nào đã được lọc bằng các keyword trong filter.json thì sẽ được lưu vào 1 folder thích hợp
     @staticmethod
     def create_filter_folder():
         config = ManagerInfoUser.load_config()
@@ -127,6 +138,8 @@ class EmailFilter:
             if not os.path.exists(file_path):
                 os.makedirs(file_path)
 
+    # Thực hiện lọc mail bằng các keyword trong filter.config
+    # Lọc theo người gửi, subject, nội dung
     @staticmethod
     def filter_email(response):
         filter_config = EmailFilter.load_filter_config()
@@ -149,6 +162,9 @@ class EmailFilter:
         return "INBOX"
 
 class EmailManager:
+    # Nếu mail chưa tồn tại trong file .csv thì ghi lại thông tin mail đó vào file
+    # Định dạng <FOLDER>, <SENDER>, <EMAIL ID>, <unread> -> lưu unread vì đây là mail mới nên sẽ luôn chưa được đọc
+    # Ngược lại thì kết thúc hàm 
     @staticmethod
     def create_mails_status(sender, email_id, filtered_email):
         config = ManagerInfoUser.load_config()
@@ -170,6 +186,9 @@ class EmailManager:
                 writer = csv.writer(file)
                 writer.writerow(element)
 
+
+    # Update lại trạng thái của các mail vào trong file .csv nếu kết thúc/tắt chương trình
+    # Nếu người dùng bật lại chương trình thì trạng thái mail sẽ ko đổi so với lần chạy chương trình trước đó
     @staticmethod
     def update_all_mail(email_list):
         config = ManagerInfoUser.load_config()
@@ -181,6 +200,7 @@ class EmailManager:
                     content = [element['folder'], element['sender'], element['mes_id'], element['status']]
                     writer.writerow(content)
 
+    # Nếu mail được đọc thì sửa lại trạng thái mail từ chưa đọc (unread) thành đã đọc (read)
     @staticmethod
     def update_status_of_mail(email_id, emails_list):
         matching_emails = [email for email in emails_list if email.get('mes_id') == email_id]
@@ -190,6 +210,7 @@ class EmailManager:
                 matching_email['status'] = "read"
 
 class EmailShow:
+    # Show ra màn hình người dùng tất cả mail đã được tải về 
     @staticmethod
     def show_download_mail():
         config = ManagerInfoUser.load_config()

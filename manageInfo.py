@@ -1,6 +1,7 @@
 from MailLib import os, json, CONFIG_FILE
 
 class ManagerInfoUser:
+    # Mở file config để đọc
     @staticmethod
     def load_config():
         try:
@@ -10,6 +11,7 @@ class ManagerInfoUser:
         except FileNotFoundError:
             return None
     
+    # Xóa (remove) một file config trong folder
     @staticmethod
     def delete_config_file():
         try:

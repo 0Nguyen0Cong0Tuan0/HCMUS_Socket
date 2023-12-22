@@ -4,6 +4,7 @@ from Menu import MenuTab
 
 #----- LOGIN TAB
 class LoginTab:
+    # Thực hiện constructor tạo window của Login Page
     def __init__(self):
         self.root = tb.Window(themename='darkly')
         self.root.title("MAIL APPLICATION")
@@ -17,6 +18,7 @@ class LoginTab:
         self.entry_POP3_PORT = None
         self.auto_load = "10" 
 
+    # Kiểm tra xem có thể kết nối đến server SMTP mà người dùng nhập vào hay ko
     def check_create_connection_to_server_to_smtp(self):
         try:
             with socket.create_connection((self.entry_server.get().strip(), self.entry_SMTP_PORT.get().strip())) as server_socket:
@@ -33,6 +35,7 @@ class LoginTab:
         except Exception as e:
             Messagebox.show_error(f"An unexpected error occurred: {e}", "SMTP Error")
 
+    # Kiểm tra xem có thể kết nối đến server POP3 mà người dùng nhập vào hay ko
     def check_create_connection_to_server_to_pop3(self):
         try:
             with socket.create_connection((self.entry_server.get().strip(), self.entry_POP3_PORT.get().strip())) as server_socket:
@@ -53,6 +56,7 @@ class LoginTab:
         except Exception as e:
             Messagebox.show_error(f"An unexpected error occurred: {e}", "POP3 Error")
     
+    # Thực hiện kiểm tra kết nối đến server SMTP và POP3
     def checker(self):
         try:
             smtp = int(self.entry_SMTP_PORT.get().strip())
@@ -65,6 +69,7 @@ class LoginTab:
             self.save_config()
             menu_tab = MenuTab(self.root)
 
+    # Thực hiện lưu thông tin mà người dùng đăng phập vào file json config
     def save_config(self):
         config = {
             "NAME": self.entry_username.get().strip(),
@@ -78,6 +83,8 @@ class LoginTab:
         with open(CONFIG_FILE, "w") as file:
             json.dump(config, file)
 
+
+    # Tạo trang login 
     def create_menu_login(self):
         # Create Frame
         frame_login = tb.Frame(self.root, bootstyle=f'{color}', width=900, height=500)
@@ -96,7 +103,6 @@ class LoginTab:
             label.grid(row=i, column=0, padx=50, pady=10, sticky="w")
 
         # Create Entry
-
         self.entry_username = tb.Entry(frame_login, font=(f'{font_type}', 12), width=50)
         self.entry_username.grid(row=1, column=1, padx=50, pady=10)
 

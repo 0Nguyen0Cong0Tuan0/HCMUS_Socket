@@ -7,6 +7,7 @@ import time
 
 #-----  MENU TAB
 class MenuTab:
+    # Thực hiện constructor tạo window (Toplevel) của trang Menu
     def __init__(self, parent):
         self.stop_thread = False
         self.config = ManagerInfoUser.load_config()
@@ -16,9 +17,11 @@ class MenuTab:
 
         self.menu()
 
+        # Chia luồng để thực hiện hàm auto_download_mail sau 10s
         self.time_counter_thread = threading.Thread(target=self.run_time_counter_to_download)
         self.time_counter_thread.start()
 
+    # Tạo giao diện menu
     def menu(self):
         # Create Frame
         frame_menu = tb.Frame(self.menu_interface, bootstyle=f'{color}', width=900, height=500)
@@ -46,11 +49,13 @@ class MenuTab:
                             text='EXIT', padding=10, command=self.press_exit)
         get_exit.grid(row=4, columnspan=4, pady=10, padx=100)
     
+    # Hàm cho nút EXIT trong Menu
     def press_exit(self):
         self.stop_thread = True
         self.menu_interface.destroy()
         ManagerInfoUser.delete_config_file()
 
+    # Hàm đếm 10s để download_mails
     def run_time_counter_to_download(self):
         counter = 0
         while True:

@@ -5,6 +5,7 @@ from manageInfo import ManagerInfoUser
 
 #---- RECEIVE TAB AND DOWNLOAD TAB
 class EmailView:
+    # Thực hiện constructor tạo ra màn hình nhằm show cho người dùng tất cả các mail đã tải về
     def __init__ (self, root):
         self.root = root
         self.root.title("Email Viewer")
@@ -34,11 +35,13 @@ class EmailView:
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
     
+    # Tạo đường dẫn đến các filter folder
     def path_to_sub_folder(self, folder_name):
         config = ManagerInfoUser.load_config()
         path = os.path.join(f"{SAVE_FOLDER}_{config['EMAIL']}", folder_name)
         return path
 
+    # Lấy thông tin của các mail đã tải về
     def take_email(self, folder_path, file_name):
         response = b""
         path_file = os.path.join(folder_path, file_name)
@@ -50,6 +53,7 @@ class EmailView:
             EmailGetter.get_subject_email(response.decode(FORMAT)),\
             EmailGetter.get_email_content(response.decode(FORMAT))
     
+    # Lưu các file đính kèm về máy của người dùng
     def save_attachments(self, response, email_id, folder, new_win):
         config = ManagerInfoUser.load_config()
         mail_folder = os.path.join(f"{SAVE_FOLDER}_{config['EMAIL']}", folder)
@@ -74,6 +78,7 @@ class EmailView:
         
         new_win.destroy()
 
+    # Tạo giao diện để người dùng tương tác (đọc) các mail đã tải về
     def show_mail(self, response, sender, subject, content, email_id, folder):
         EmailManager.update_status_of_mail(email_id, emails_list)
 

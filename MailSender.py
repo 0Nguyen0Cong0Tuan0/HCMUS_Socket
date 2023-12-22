@@ -2,6 +2,8 @@ from MailLib import *
 from manageInfo import ManagerInfoUser
 
 class EmailSendInfo:
+    # Lấy thông tin người dùng gửi TO
+    # Tách các dấu ',' trong chuỗi string thành kiểu dữ liệu <list> 
     @staticmethod
     def get_email_to(mails_address_to, to_email):
         if to_email is not None:
@@ -9,6 +11,8 @@ class EmailSendInfo:
             To = [email.strip() for email in to_email]
             mails_address_to.extend(To)
     
+    # Lấy thông tin người dùng gửi CC
+    # Tách các dấu ',' trong chuỗi string thành kiểu dữ liệu <list> 
     @staticmethod
     def get_email_cc(mails_address_cc, cc_email):
         if cc_email is not None:
@@ -16,6 +20,8 @@ class EmailSendInfo:
             Cc = [email.strip() for email in cc_email]
             mails_address_cc.extend(Cc)
     
+    # Lấy thông tin người dùng gửi BCC
+    # Tách các dấu ',' trong chuỗi string thành kiểu dữ liệu <list> 
     @staticmethod
     def get_email_bcc(mails_address_bcc, bcc_email):
         if bcc_email is not None:
@@ -23,6 +29,8 @@ class EmailSendInfo:
             Bcc = [email.strip() for email in bcc_email]
             mails_address_bcc.extend(Bcc)
     
+    # Lấy các đường dẫn của các file đính kèm
+    # Nếu list trống [''] (ko có bất cứ đường dẫn nào) thì trả về list rỗng [] 
     @staticmethod
     def get_attached_file(entry_filename):
         if entry_filename == ['']:
@@ -30,14 +38,17 @@ class EmailSendInfo:
         else:
             return entry_filename
     
+    # Tạo universal unique ID cho mail
     @staticmethod
     def generate_message_id():
         return str(uuid.uuid4())
     
+    # Tách tên miền (lấy từ '@' đến cuối chuỗi)
     @staticmethod
     def take_domain(From):
         return '@' + From.split('@')[1]
 
+    # Encode tên người dùng (username)
     @staticmethod
     def encode_user_name():
         config = ManagerInfoUser.load_config()
@@ -45,6 +56,8 @@ class EmailSendInfo:
         return f'=?UTF-8?B?{encoded_name}?='
 
 class EmailEncoder:
+    # Thực hiện encode file đính kèm
+    # Gửi thêm các thông tin của file đính kèm
     @staticmethod
     def encode_and_header_attach_file(file_path, content_type):
         if os.path.exists(file_path):
@@ -60,6 +73,7 @@ class EmailEncoder:
                                 "\r\nContent-Transfer-Encoding: base64\r\n\r\n"
                 return attachment_header + file_content_with_newlines + "\r\n\r\n"
 
+    # đính kèm file txt vào mail
     @staticmethod       
     def attach_txt_in_email(file_path):
         if os.path.exists(file_path):
@@ -67,6 +81,7 @@ class EmailEncoder:
         else:
             return ""
     
+    # đính kèm file docx vào mail
     @staticmethod
     def attach_docx_in_email(file_path):
         if os.path.exists(file_path):
@@ -74,6 +89,7 @@ class EmailEncoder:
         else:
             return ""
 
+    # đính kèm file pdf vào mail
     @staticmethod
     def attach_pdf_in_email(file_path):
         if os.path.exists(file_path):
@@ -81,6 +97,7 @@ class EmailEncoder:
         else:
             return ""
     
+    # đính kèm file hình vào mail
     @staticmethod
     def attach_image_in_email(file_path):
         if os.path.exists(file_path):
@@ -88,6 +105,7 @@ class EmailEncoder:
         else:
             return ""
 
+    # đính kèm file zip vào mail
     @staticmethod
     def attach_zip_in_email( file_path):
         if os.path.exists(file_path):
@@ -96,6 +114,7 @@ class EmailEncoder:
             return ""
         
 class EmailSender:
+    # Gửi các header chung, giao tiếp với server SMTP
     @staticmethod
     def send_header(server_socket, From, Type_to, Type_cc, Type_bcc):
         config = ManagerInfoUser.load_config()
@@ -135,6 +154,7 @@ class EmailSender:
         if not response.startswith('354'):
             raise Exception(f"Error sending data: {response}")
     
+    # Gửi các header chung cho cả mail có file và ko có file
     @staticmethod
     def send_header_normal_mail(server_socket, From):
         message_id = '<' + EmailSendInfo.generate_message_id() + EmailSendInfo.take_domain(From) + '>'
@@ -148,11 +168,13 @@ class EmailSender:
         server_socket.send(f"User-Agent: {USER_AGENT}\r\n".encode())
         server_socket.send(f"Content-Language: {CONTENT_LANGUAGE}\r\n".encode())
 
+    # Gửi các header nếu như file có file đính kèm
     @staticmethod
     def send_header_attached_file_mail(server_socket, From):
         server_socket.send(f"Content-Type: multipart/mixed; boundary=\"{BOUNDARY}\"\r\n".encode())
         EmailSender.send_header_normal_mail(server_socket, From)
 
+    # Gửi các header nếu như file không có file đính kèm
     @staticmethod
     def send_normal_mail(server_socket, email_data, content):
         email_data += f"Content-Type: {CONTENT_TYPE}\r\nContent-Transfer-Encoding: {CONTENT_TRANSFER_ENCODING}\r\n\r\n{content}\r\n\r\n"
@@ -162,37 +184,44 @@ class EmailSender:
         if not response.startswith('250'):
                 raise Exception(f"Error sending email: {response}")
 
+    # Gửi nội dung của mail cho server SMTP
     @staticmethod
     def send_content_of_attached_mail(email_data, server_socket, content):
         email_data += f"\r\n{NOTICE}\r\n--{BOUNDARY}\r\nContent-Type: {CONTENT_TYPE}\r\nContent-Transfer-Encoding: {CONTENT_TRANSFER_ENCODING}\r\n\r\n{content}\r\n\r\n"
         server_socket.sendall(f"{email_data}".encode())
         server_socket.send(f"--{BOUNDARY}".encode())
 
+    # Gửi file txt cho server SMTP
     @staticmethod
     def send_txt_file(server_socket, email_data, file, content):
         EmailSender.send_content_of_attached_mail(email_data, server_socket, content)
         server_socket.send(f"{EmailEncoder.attach_txt_in_email(file)}".encode())    
     
+    # Gửi file docx cho server SMTP
     @staticmethod
     def send_docx_file(server_socket, email_data, file, content):
         EmailSender.send_content_of_attached_mail(email_data, server_socket, content)
         server_socket.send(f"{EmailEncoder.attach_docx_in_email(file)}".encode())    
 
+    # Gửi file pdf cho server SMTP
     @staticmethod
     def send_pdf_file(server_socket, email_data, file, content):
         EmailSender.send_content_of_attached_mail(email_data, server_socket, content)
         server_socket.send(f"{EmailEncoder.attach_pdf_in_email(file)}".encode())    
 
+    # Gửi file hình cho server SMTP
     @staticmethod
     def send_image_file(server_socket, email_data, file, content):
         EmailSender.send_content_of_attached_mail(email_data, server_socket, content)
         server_socket.send(f"{EmailEncoder.attach_image_in_email(file)}".encode())    
 
+    # Gửi file zip cho server SMTP
     @staticmethod
     def send_zip_file(server_socket, email_data, file, content):
         EmailSender.send_content_of_attached_mail(email_data, server_socket, content)
         server_socket.send(f"{EmailEncoder.attach_zip_in_email(file)}".encode())    
 
+    # Gửi tất cả các file đính kèm đã được người dùng chọn
     @staticmethod
     def send_all_file(server_socket, From, attach_files, email_data, content):
         EmailSender.send_header_attached_file_mail(server_socket, From)
@@ -217,8 +246,10 @@ class EmailSender:
         response = server_socket.recv(HEADER).decode()
         if not response.startswith('250'):
                 raise Exception(f"Error sending email: {response}")
-    
+
 class EmailClient_Send: 
+    # Gửi mail Bcc 
+    # Thực hiện khi người dùng ko có gửi mail To, Cc
     def send_email_bcc(From, Bcc, subject, content, attach_files):
         config = ManagerInfoUser.load_config()
         check_attach_file = bool(attach_files)
@@ -241,6 +272,7 @@ class EmailClient_Send:
             
             server_socket.send("QUIT\r\n".encode())
 
+    # Gửi mail bao gồm gửi To, Cc, Bcc
     def send_email(from_address, to_addresses, cc_addresses, bcc_addresses, subject, content, attach_files):
         config = ManagerInfoUser.load_config()
         check_attach_file = bool(attach_files)
@@ -275,6 +307,7 @@ class EmailClient_Send:
 
             server_socket.send("QUIT\r\n".encode()) 
 
+    # Chạy chương trình gửi mail
     @staticmethod
     def run_send_mail_program(entry_to, entry_cc, entry_bcc, entry_subject, entry_content, entry_filename):
         mails_address_to = []
